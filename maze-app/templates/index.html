@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Maze DFS Visualization</title>
+    <title>Maze Algorithm Visualizer</title>
     <style>
         body { font-family: Arial; text-align: center; }
         canvas { border: 1px solid #000; margin: 20px auto; display: block; }
@@ -23,7 +23,6 @@
         </select>
     </div>
     <canvas id="mazeCanvas" width="600" height="600"></canvas>
-
     <script>
         const CELL_SIZE = 20;
         const WIDTH = 30, HEIGHT = 30;
@@ -167,7 +166,7 @@
                 );
                 
                 // Slow down animation
-                if (i % 1 === 0) await new Promise(r => setTimeout(r, 30));
+                if (i % 1 === 0) await new Promise(r => setTimeout(r, 10));
             }
             for (let i = path.length -1 ; i >=0 ; i--) {
                 const [x, y] = path[i].split(',').map(Number);
@@ -180,7 +179,7 @@
                 );
                 
                 // Slow down animation
-                if (i % 1 === 0) await new Promise(r => setTimeout(r, 30));
+                if (i % 1 === 0) await new Promise(r => setTimeout(r, 10));
             }
             
             // Draw final path

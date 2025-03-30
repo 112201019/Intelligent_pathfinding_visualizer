@@ -105,7 +105,7 @@ def a_starM(maze, start, end):
     return visited_order, final_path
 
 def EuclideanDistance(a, b):
-    return (a[0] - b[0])**2 + (a[1] - b[1])**2
+    return ((a[0] - b[0])**2 + (a[1] - b[1])**2) **0.5
 
 def a_starE(maze, start, end):
     visited_order = []
