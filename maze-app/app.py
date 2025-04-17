@@ -10,7 +10,7 @@ def index():
 
 @app.route('/generate-maze')
 def generate_maze_route():
-    maze = generate_maze(30, 30)
+    maze = generate_maze(80, 40)
     serialized = {f"{x},{y}": [f"{n[0]},{n[1]}" for n in neighbors] for (x, y), neighbors in maze.items()}
     return jsonify({'maze': serialized})
 
@@ -19,7 +19,7 @@ def solve():
     data = request.json
     try:
         maze_data = data['maze']['maze']
-        print(data.keys())
+        # print(data.keys())
         start = tuple(map(int, data['start'].split(',')))
         end = tuple(map(int, data['end'].split(',')))
         algorithm=data['algorithm']
@@ -28,18 +28,25 @@ def solve():
             x, y = map(int, cell_str.split(','))
             maze[(x, y)] = [tuple(map(int, n.split(','))) for n in neighbors_str]
         if algorithm=="BFS":
-            visited, path = bfs(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath = bfs(maze, start, end)
         elif algorithm=="DFS":    
-            visited, path = dfs(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath= dfs(maze, start, end)
         elif algorithm=="A*_Manhattan":
-            visited, path = a_starM(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath= a_starM(maze, start, end)
         elif algorithm=="A*_Euclidean":
-            visited, path = a_starE(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath= a_starE(maze, start, end)
+        elif algorithm=="A*_cheby":
+            visited, path, maxspace, visitedlength, lenpath= a_starC(maze, start, end)
+        elif algorithm=="A*_wall":
+            visited, path, maxspace, visitedlength, lenpath= a_star_enhanced(maze, start, end, 1)
             
         
         return jsonify({
             'visited': [f"{x},{y}" for x, y in visited],
-            'path': [f"{x},{y}" for x, y in path]
+            'path': [f"{x},{y}" for x, y in path],
+            'maxspace': maxspace,
+            'visitedlength':visitedlength,
+            'lenpath': lenpath
         })
         
     except KeyError as e:
@@ -48,4 +55,4 @@ def solve():
         return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="10.32.5.70", port=5000)

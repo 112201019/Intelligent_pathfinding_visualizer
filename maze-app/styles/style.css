@@ -3,14 +3,53 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+    margin: 0;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #333;
 }
 
 .controls {
-    margin: 20px;
-    gap: 10px;
     display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+button, select {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+select {
+    background-color: white;
+    border: 1px solid #ccc;
 }
 
 canvas {
-    border: 1px solid #ccc;
+    border: 3px solid #333;
+    background: white;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
 }

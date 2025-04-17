@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Maze Algorithm Visualizer</title>
+    <style>
+      /* CSS Variables for consistency */
+      :root {
+        --primary-color: #1a1a1a;
+        --accent-color: #4e54c8;
+        --background-start: #e0eafc;
+        --background-end: #cfdef3;
+        --card-bg: #ffffff;
+        --shadow-light: rgba(0, 0, 0, 0.1);
+        --shadow-dark: rgba(0, 0, 0, 0.2);
+        --border-radius: 10px;
+      }
+    
+      /* Global reset & base styling */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, var(--background-start), var(--background-end));
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        padding: 20px;
+      }
+    
+      /* Heading Styling */
+      h1 {
+        font-size: 2.75rem;
+        margin-bottom: 30px;
+        text-align: center;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-shadow: 2px 2px 6px var(--shadow-dark);
+      }
+    
+      /* Controls Panel */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        background: var(--card-bg);
+        padding: 20px 30px;
+        border-radius: var(--border-radius);
+        box-shadow: 0 6px 18px var(--shadow-light);
+        margin-bottom: 30px;
+      }
+    
+      /* Button & Select Styling */
+      button, select {
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 500;
+        border: none;
+        border-radius: var(--border-radius);
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s;
+        cursor: pointer;
+      }
+    
+      button {
+        background: var(--primary-color);
+        color: #fff;
+      }
+    
+      button:hover {
+        background: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-dark);
+      }
+    
+      select {
+        background: #f4f4f4;
+        border: 1px solid #ddd;
+        color: var(--primary-color);
+      }
+    
+      select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+      }
+      
+      /* Canvas styling */
+      canvas {
+        border: 2px solid var(--primary-color);
+        background: var(--card-bg);
+        box-shadow: 0 6px 18px var(--shadow-light);
+        margin-top: 20px;
+        border-radius: var(--border-radius);
+      }
+      
+      /* Info button styling */
+      .info-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px var(--shadow-light);
+        transition: transform 0.2s ease, background-color 0.3s;
+        z-index: 100;
+      }
+      
+      .info-button:hover {
+        background: var(--accent-color);
+        transform: scale(1.1);
+      }
+      
+      /* Info panel styling */
+      .info-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      
+      .info-panel {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        max-width: 700px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px var(--shadow-dark);
+      }
+      
+      .info-panel h2 {
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+      }
+      
+      .info-panel h3 {
+        margin: 20px 0 10px;
+        color: var(--primary-color);
+      }
+      
+      .info-panel p {
+        margin-bottom: 15px;
+        line-height: 1.6;
+      }
+      
+      .info-panel ul {
+        margin: 15px 0;
+        padding-left: 20px;
+      }
+      
+      .info-panel li {
+        margin-bottom: 10px;
+        line-height: 1.4;
+      }
+      
+      .info-panel .key {
+        display: inline-block;
+        background: #f0f0f0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        border: 1px solid #ddd;
+        margin: 0 3px;
+      }
+      
+      .close-info {
+        display: block;
+        margin: 20px auto 0;
+        background: var(--primary-color);
+        color: white;
+        padding: 10px 25px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      
+      .close-info:hover {
+        background: var(--accent-color);
+      }
+      
+      .algorithm-info {
+        background: #f9f9f9;
+        border-left: 4px solid var(--accent-color);
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+      
+      /* Stats Panel Styling */
+      .stats-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      
+      .stats-panel {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        max-width: 800px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px var(--shadow-dark);
+      }
+      
+      .stats-panel h2 {
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+        text-align: center;
+      }
+      
+      .stats-panel p {
+        margin-bottom: 15px;
+        line-height: 1.6;
+      }
+      
+      .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 16px;
+      }
+      
+      .stats-table th, .stats-table td {
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      
+      .stats-table th {
+        background-color: var(--accent-color);
+        color: white;
+        font-weight: 600;
+      }
+      
+      .stats-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      
+      .stats-table tr:hover {
+        background-color: #f0f0f0;
+      }
+      
+      .stats-table .fastest {
+        background-color: rgba(76, 175, 80, 0.2);
+        font-weight: bold;
+      }
+      
+      .no-stats {
+        text-align: center;
+        padding: 20px;
+        color: #777;
+        font-style: italic;
+      }
+      
+      .stats-chart-container {
+        width: 100%;
+        height: 300px;
+        margin: 20px 0;
+      }
+    
+      /* Responsive adjustments */
+      @media (max-width: 480px) {
+        .controls {
+          flex-direction: column;
+          padding: 15px;
+        }
+        
+        button, select {
+          width: 100%;
+        }
+        
+        h1 {
+          font-size: 2rem;
+        }
+        
+        .info-panel, .stats-panel {
+          padding: 15px;
+          width: 95%;
+        }
+        
+        .stats-table {
+          font-size: 14px;
+        }
+        
+        .stats-table th, .stats-table td {
+          padding: 8px 10px;
+        }
+      }
+    </style>
+</head>
+<body>
+    <h1>Maze Algorithm Visualizer</h1>
+    <div class="controls">
+        <button onclick="generateMaze()">New Maze</button>
+        <!-- Dropdown for algorithm selection -->
+        <button onclick="solveMaze()">Solve</button>
+        <select id="algorithmSelect">
+            <option value="DFS">Depth-First Search</option>
+            <option value="BFS">Breadth-First Search</option>
+            <option value="A*_Manhattan">A* Search (Manhattan)</option>
+            <option value="A*_Euclidean">A* Search (Euclidean)</option>
+            <option value="A*_cheby">A* Search (Chebyshev)</option>
+            <option value="A*_cheby1">A* Search (ManWallHeu)</option>
+        </select>
+        <button id="pausePlayButton" onclick="togglePause()">Pause</button>
+        <button id="compareButton" onclick="showStatsPanel()">Compare Stats</button>
+    </div>
+
+    <!-- Info Button -->
+    <div class="info-button" onclick="showInfoPanel()">i</div>
+    
+    <!-- Info Panel Overlay -->
+    <div class="info-overlay" id="infoOverlay">
+        <div class="info-panel">
+            <h2>Maze Algorithm Visualizer - Help</h2>
+            
+            <p>This tool allows you to visualize different pathfinding algorithms through a randomly generated maze.</p>
+            
+            <h3>Getting Started</h3>
+            <ul>
+                <li>Click <strong>New Maze</strong> to generate a random maze.</li>
+                <li>Select a pathfinding algorithm from the dropdown menu.</li>
+                <li>Click <strong>Solve</strong> to watch the algorithm find a path from start to end.</li>
+                <li>Use <strong>Pause/Play</strong> to control the animation speed.</li>
+                <li>Click <strong>Compare Stats</strong> to see performance statistics of algorithms you've run.</li>
+            </ul>
+            
+            <h3>Maze Interaction</h3>
+            <ul>
+                <li><span class="key">Click</span> any cell to select it.</li>
+                <li><span class="key">Shift + Click</span> to set the <span style="color: green">start position</span> (green cell).</li>
+                <li><span class="key">Ctrl + Click</span> to set the <span style="color: red">end position</span> (red cell).</li>
+            </ul>
+            
+            <h3>Cell Colors</h3>
+            <ul>
+                <li><span style="color: green">Green</span>: Start position</li>
+                <li><span style="color: red">Red</span>: End position</li>
+                <li><span style="color: rgb(239, 239, 0)">Yellow</span>: Cells visited during search</li>
+                <li><span style="color: rgb(74, 186, 255)">Blue</span>: Final solution path</li>
+            </ul>
+            
+            <h3>Pathfinding Algorithms</h3>
+            <div class="algorithm-info">
+                <p><strong>Depth-First Search (DFS)</strong> - Explores as far as possible along each branch before backtracking. Fast but doesn't guarantee the shortest path.</p>
+                
+                <p><strong>Breadth-First Search (BFS)</strong> - Explores all neighbor nodes at the present depth before moving to nodes at the next depth level. Guarantees the shortest path in an unweighted graph.</p>
+                
+                <p><strong>A* Search</strong> - An informed search algorithm that uses a heuristic to guide its search. Different heuristics available:</p>
+                <ul>
+                    <li><strong>Manhattan</strong>: Sum of horizontal and vertical distances</li>
+                    <li><strong>Euclidean</strong>: Straight-line distance</li>
+                    <li><strong>Chebyshev</strong>: Maximum of horizontal and vertical distances</li>
+                    <li><strong>ManWallHeu</strong>: Manhattan distance with wall penalties</li>
+                </ul>
+            </div>
+            
+            <button class="close-info" onclick="hideInfoPanel()">Close</button>
+        </div>
+    </div>
+    
+    <!-- Stats Panel Overlay -->
+    <div class="stats-overlay" id="statsOverlay">
+        <div class="stats-panel">
+            <h2>Algorithm Performance Comparison</h2>
+            
+            <div id="statsContent">
+                <p class="no-stats">No algorithm runs yet. Run some algorithms to see comparison stats.</p>
+            </div>
+            
+            <div class="stats-chart-container">
+                <canvas id="statsChart"></canvas>
+            </div>
+            
+            <button class="close-info" onclick="hideStatsPanel()">Close</button>
+        </div>
+    </div>
+
+    <canvas id="mazeCanvas" width="1600" height="800"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        const CELL_SIZE = 20;
+        const WIDTH = 80, HEIGHT = 40;
+        let mazeData = null;
+        let start = {x: 0, y: 0};
+        let end = {x: WIDTH-1, y: HEIGHT-1};
+        let paused = false;
+        let cancelAnimation = false;
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Stats tracking
+        let algorithmStats = {};
+        let statsChart = null;
+
+        // Info panel functions
+        function showInfoPanel() {
+            document.getElementById('infoOverlay').style.display = 'flex';
+        }
+        
+        function hideInfoPanel() {
+            document.getElementById('infoOverlay').style.display = 'none';
+        }
+        
+        // Stats panel functions
+        function showStatsPanel() {
+            updateStatsPanel();
+            document.getElementById('statsOverlay').style.display = 'flex';
+        }
+        
+        function hideStatsPanel() {
+            document.getElementById('statsOverlay').style.display = 'none';
+        }
+        
+        function updateStatsPanel() {
+            const statsContent = document.getElementById('statsContent');
+            
+            if (Object.keys(algorithmStats).length === 0) {
+                statsContent.innerHTML = '<p class="no-stats">No algorithm runs yet. Run some algorithms to see comparison stats.</p>';
+                return;
+            }
+            
+            // Find the fastest algorithm
+            let minTime = Infinity;
+            let fastestAlgo = null;
+            
+            for (const algo in algorithmStats) {
+                if (algorithmStats[algo].executionTime < minTime) {
+                    minTime = algorithmStats[algo].executionTime;
+                    fastestAlgo = algo;
+                }
+            }
+            
+            // Create table HTML
+            let tableHTML = `
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>Execution Time (ms)</th>
+                            <th>Last Run</th>
+                            <th>Run Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            for (const algo in algorithmStats) {
+                const stats = algorithmStats[algo];
+                const isFastest = algo === fastestAlgo ? 'fastest' : '';
+                
+                tableHTML += `
+                    <tr class="${isFastest}">
+                        <td>${algo}</td>
+                        <td>${stats.executionTime.toFixed(2)}</td>
+                        <td>${stats.lastRun}</td>
+                        <td>${stats.runCount}</td>
+                    </tr>
+                `;
+            }
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+                <p><strong>Fastest Algorithm:</strong> ${fastestAlgo} (${minTime.toFixed(2)} ms)</p>
+            `;
+            
+            statsContent.innerHTML = tableHTML;
+            
+            // Update chart
+            updateStatsChart();
+        }
+        
+        function updateStatsChart() {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            const algorithms = Object.keys(algorithmStats);
+            const times = algorithms.map(algo => algorithmStats[algo].executionTime);
+            const backgroundColors = algorithms.map((algo, index) => {
+                // Generate colors with increasing hue
+                const hue = (index * 30) % 360;
+                return `hsla(${hue}, 70%, 60%, 0.7)`;
+            });
+            
+            if (statsChart) {
+                statsChart.destroy();
+            }
+            
+            statsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: algorithms,
+                    datasets: [{
+                        label: 'Execution Time (ms)',
+                        data: times,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Time (ms)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Algorithm'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y.toFixed(2)} ms`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Close panels when clicking outside
+        document.getElementById('infoOverlay').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideInfoPanel();
+            }
+        });
+        
+        document.getElementById('statsOverlay').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideStatsPanel();
+            }
+        });
+
+        // Initialize
+        generateMaze();
+
+        async function generateMaze() {
+            cancelAnimation = true; // Cancel any ongoing animation
+            // Clear the canvas immediately
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Optionally, add a small delay to ensure the current animation stops
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            // Now generate the new maze as before
+            const response = await fetch('/generate-maze');
+            mazeData = await response.json();
+            drawMaze();
+            drawStartEnd();
+        }
+
+        function togglePause() {
+            paused = !paused;
+            // Update the button text based on the state
+            document.getElementById('pausePlayButton').textContent = paused ? 'Play' : 'Pause';
+        }
+
+        async function wait(ms) {
+            let elapsed = 0;
+            while (elapsed < ms) {
+                if (!paused) {
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                    elapsed += 10;
+                } else {
+                    // If paused, wait in small increments
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+            }
+        }
+
+        function drawMaze() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 2;
+            for (let x = 0; x <= WIDTH; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * CELL_SIZE, 0);
+                ctx.lineTo(x * CELL_SIZE, HEIGHT * CELL_SIZE);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= HEIGHT; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * CELL_SIZE);
+                ctx.lineTo(WIDTH * CELL_SIZE, y * CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // Draw walls
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            for (const cellStr in mazeData.maze) {
+                const [x, y] = cellStr.split(',').map(Number);
+                const neighbors = mazeData.maze[cellStr].map(n => n.split(',').map(Number));
+                
+                // Check each direction for walls
+                if (!neighbors.some(([nx, ny]) => nx === x+1 && ny === y)) { // Right
+                    ctx.beginPath();
+                    ctx.moveTo((x+1)*CELL_SIZE, y*CELL_SIZE);
+                    ctx.lineTo((x+1)*CELL_SIZE, (y+1)*CELL_SIZE);
+                    ctx.stroke();
+                }
+                if (!neighbors.some(([nx, ny]) => nx === x && ny === y+1)) { // Down
+                    ctx.beginPath();
+                    ctx.moveTo(x*CELL_SIZE, (y+1)*CELL_SIZE);
+                    ctx.lineTo((x+1)*CELL_SIZE, (y+1)*CELL_SIZE);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function drawStartEnd() {
+            // Start (green)
+            ctx.fillStyle = 'green';
+            ctx.fillRect(
+                start.x * CELL_SIZE + 2, 
+                start.y * CELL_SIZE + 2, 
+                CELL_SIZE - 2, 
+                CELL_SIZE - 2
+            );
+            
+            // End (red)
+            ctx.fillStyle = 'red';
+            ctx.fillRect(
+                end.x * CELL_SIZE + 2, 
+                end.y * CELL_SIZE + 2, 
+                CELL_SIZE - 2, 
+                CELL_SIZE - 2
+            );
+        }
+
+        async function solveMaze() {
+            cancelAnimation = true;
+            if (!mazeData) return;
+            
+            const algorithm = document.getElementById('algorithmSelect').value;
+            const startTime = performance.now();
+            
+            const response = await fetch('/solve', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    maze: mazeData,
+                    start: `${start.x},${start.y}`,
+                    end: `${end.x},${end.y}`,
+                    algorithm: algorithm
+                })
+            });
+            
+            const result = await response.json();
+            const endTime = performance.now();
+            const executionTime = endTime - startTime;
+            
+            // Record statistics
+            if (!algorithmStats[algorithm]) {
+                algorithmStats[algorithm] = {
+                    executionTime: executionTime,
+                    runCount: 1,
+                    lastRun: new Date().toLocaleTimeString()
+                };
+            } else {
+                algorithmStats[algorithm].executionTime = executionTime;
+                algorithmStats[algorithm].runCount++;
+                algorithmStats[algorithm].lastRun = new Date().toLocaleTimeString();
+            }
+            
+            // Start animation of solution
+            animateSolution(result.visited, result.path);
+        }
+
+        function drawArrow(fromX, fromY, toX, toY) {
+            // Draw main line
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+        
+            // Calculate arrowhead angle
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const arrowLength = 6; // Length of arrowhead lines
+            const arrowAngle = Math.PI/6; // 30 degrees
+        
+            // Draw arrowhead lines
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(
+                toX - arrowLength * Math.cos(angle - arrowAngle),
+                toY - arrowLength * Math.sin(angle - arrowAngle)
+            );
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(
+                toX - arrowLength * Math.cos(angle + arrowAngle),
+                toY - arrowLength * Math.sin(angle + arrowAngle)
+            );
+            ctx.stroke();
+        }
+
+        async function animateSolution(visited, path) {
+            // Reset cancellation flag for new animation
+            cancelAnimation = false;
+            
+            // Draw visited cells
+            drawMaze();
+            drawStartEnd();
+
+            for (let i = 0; i < visited.length; i++) {
+                // Wait if paused before drawing each cell
+                if (cancelAnimation) return; // Stop animation if cancelled
+                while (paused) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    if (cancelAnimation) return; // Stop animation if cancelled
+                }
+                const [x, y] = visited[i].split(',').map(Number);
+                ctx.fillStyle = 'rgba(74, 186, 255, 0.7)';
+                ctx.fillRect(
+                    x * CELL_SIZE + 2,
+                    y * CELL_SIZE + 2,
+                    CELL_SIZE - 2,
+                    CELL_SIZE - 2
+                );
+                drawStartEnd();                
+                // Slow down animation
+                if (i % 1 === 0) await new Promise(r => setTimeout(r, 3));
+                if (i % 1 === 0) await wait(10);
+            }
+            for (let i = path.length - 1; i > 0; i--) {
+                if (cancelAnimation) return; // Stop animation if cancelled
+                
+                while (paused) {
+                  await new Promise(resolve => setTimeout(resolve, 50));
+                  if (cancelAnimation) return; // Stop animation if cancelled
+                }
+                
+                const [x, y] = path[i].split(',').map(Number);
+                const [prevX, prevY] = path[i-1].split(',').map(Number);
+                
+                // Fill current cell
+                ctx.fillStyle = 'rgb(239, 239, 0)';
+                ctx.fillRect(
+                  x * CELL_SIZE + 2,
+                  y * CELL_SIZE + 2,
+                  CELL_SIZE - 2,
+                  CELL_SIZE - 2
+                );
+                
+                // Draw arrow from current to previous cell
+                const startX = x * CELL_SIZE + CELL_SIZE/2;
+                const startY = y * CELL_SIZE + CELL_SIZE/2;
+                const endX = prevX * CELL_SIZE + CELL_SIZE/2;
+                const endY = prevY * CELL_SIZE + CELL_SIZE/2;
+                
+                drawArrow(endX, endY, startX, startY);
+                
+                drawStartEnd();
+                
+                // Slow down animation
+                await wait(30);
+              }
+              
+              // Don't forget to fill the last cell (start position)
+              if (path.length > 0) {
+                const [x, y] = path[0].split(',').map(Number);
+                ctx.fillStyle = 'rgb(239, 239, 0)';
+                ctx.fillRect(
+                  x * CELL_SIZE + 2,
+                  y * CELL_SIZE + 2,
+                  CELL_SIZE - 2,
+                  CELL_SIZE - 2
+                );
+                drawStartEnd();
+              }
+            if (!cancelAnimation) {
+                drawStartEnd();
+            }
+            // Redraw start/end on top
+            drawStartEnd();
+        }
+
+        // Handle cell selection
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / CELL_SIZE);
+            const y = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+            
+            if (e.shiftKey) {
+                start = {x, y};
+            } else if (e.ctrlKey) {
+                end = {x, y};
+            }
+            
+            drawMaze();
+            drawStartEnd();
+        });
+    </script>
+</body>
+</html>
