@@ -33,7 +33,7 @@ def dfs(maze, start, end):
         final_path.append(node)
         node = path[node]
     final_path.reverse()
-    print(len(visited), len(final_path), maxsize)
+    # print(len(visited), len(final_path), maxsize)
     return visited_order, final_path, maxsize, len(visited), len(final_path)
 
 def bfs(maze, start, end):
@@ -66,7 +66,7 @@ def bfs(maze, start, end):
         final_path.append(node)
         node = path[node]
     final_path.reverse()
-    print(len(visited), len(final_path))
+    # print(len(visited), len(final_path))
     
     return visited_order, final_path, maxsize, len(visited), len(final_path)
 

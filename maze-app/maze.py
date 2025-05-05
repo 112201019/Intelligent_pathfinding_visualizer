@@ -37,5 +37,5 @@ def generate_maze(width, height):
                 if neighbor not in maze[cell]:
                     maze[cell].append(neighbor)
                     maze[neighbor].append(cell)
-
+    # print(maze)
     return maze

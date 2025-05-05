@@ -180,8 +180,8 @@
       /* ---=== Floating Action Button (Info) ===--- */
       .fab-info {
         position: fixed;
-        bottom: 25px;
-        right: 25px;
+        top: 25px;
+        left: 25px;
         width: 50px;
         height: 50px;
         border-radius: 50%;
@@ -190,7 +190,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 20px;
         font-weight: bold;
         cursor: pointer;
         box-shadow: 0 5px 15px var(--shadow-dark);
@@ -389,43 +389,137 @@
         .modal-panel { padding: 15px 20px; }
         .stats-chart-container { min-height: 250px; }
       }
+      .control-item {
+        display: flex; /* For potential labels later */
+        align-items: center;
+        margin-bottom: 5px; /* Add some spacing for wrapped items */
+      }
+
+      /* Style number inputs similarly to selects/buttons */
+      input[type="number"] {
+          padding: 8px 10px; /* Adjust padding */
+          font-size: 14px; /* Adjust font size */
+          font-weight: 500;
+          font-family: inherit;
+          border: 1px solid var(--border-color);
+          border-radius: var(--border-radius);
+          background-color: var(--control-bg);
+          color: var(--control-text);
+          box-shadow: 0 1px 3px var(--shadow-light);
+          max-width: 75px; /* Prevent them from getting too wide */
+      }
+      input[type="number"]:focus {
+         outline: 2px solid var(--accent-color);
+         outline-offset: 2px;
+      }
+
+       /* Style range slider */
+      input[type="range"] {
+        flex-grow: 1; /* Allow slider to fill space */
+        margin: 0 5px; /* Add some horizontal margin */
+        accent-color: var(--accent-color); /* Color the slider track/thumb */
+      }
+
+      /* Style the output for speed */
+      #speedValue {
+         font-variant-numeric: tabular-nums; /* Keep number width consistent */
+      }
+
+       /* Adjust label alignment */
+      .control-item label {
+          margin-right: 5px;
+          color: var(--control-text); /* Make labels visible on card background */
+          font-size: 14px;
+      }
+
+      /* ---=== Responsive Adjustments ===--- */
+      @media (max-width: 768px) {
+        /* Existing rules */
+        .controls { justify-content: space-around; } /* Better spacing on wrap */
+      }
+
+      @media (max-width: 480px) {
+         /* Existing rules */
+         .control-item {
+            width: 100%; /* Make each item take full width */
+            justify-content: space-between; /* Space out label and input */
+         }
+         input[type="number"] {
+             max-width: 100px; /* Allow a bit more width on small screens */
+         }
+         .control-item label {
+             flex-shrink: 0; /* Prevent label from shrinking too much */
+         }
+         #speedSlider { width: auto; } /* Let flexbox handle width */
+      }
 
     </style>
 </head>
 <body>
-    <h1>Maze Algorithm Visualizer</h1>
+    <h1>Algorithm Visualizer on Mazes</h1>
 
+          
+          
     <div class="controls">
+        <!-- Maze Size Controls -->
+        <div class="control-item">
+            <label for="mazeWidthInput" style="color: var(--control-text); margin-right: 5px;">Width:</label>
+            <input type="number" id="mazeWidthInput" value="80" min="10" max="250" step="2" style="width: 70px; padding: 8px 10px;">
+        </div>
+        <div class="control-item">
+            <label for="mazeHeightInput" style="color: var(--control-text); margin-right: 5px;">Height:</label>
+            <input type="number" id="mazeHeightInput" value="40" min="10" max="250" step="2" style="width: 70px; padding: 8px 10px;">
+        </div>
+
+        <!-- Maze Generation Button -->
         <div class="control-item">
             <button id="newMazeBtn" onclick="generateMaze()"><i class="fas fa-sync-alt"></i> New Maze</button>
         </div>
+
+        <!-- Algorithm Selection -->
         <div class="control-item">
              <select id="algorithmSelect" title="Select Pathfinding Algorithm">
                 <option value="DFS">Depth-First Search</option>
                 <option value="BFS">Breadth-First Search</option>
                 <option value="A*_Manhattan">A* (Manhattan)</option>
                 <option value="A*_Euclidean">A* (Euclidean)</option>
-                <option value="A*_cheby">A* (Chebyshev)</option>
-                <option value="A*_cheby1">A* (ManWallHeu)</option>
+                <option value="A*_chebyshev">A* (Chebyshev)</option>
+                <option value="A*_ManhattanWallHeuristic">A* (Wall Heusristic)</option>
             </select>
         </div>
+
+        <!-- Solve Button -->
         <div class="control-item">
             <button id="solveBtn" onclick="solveMaze()"><i class="fas fa-route"></i> Solve</button>
         </div>
+
+        <!-- Animation Controls -->
         <div class="control-item">
             <button id="pausePlayButton" onclick="togglePause()" class="secondary" disabled><i class="fas fa-pause"></i> Pause</button>
         </div>
+
+        <!-- Speed Slider -->
+        <div class="control-item" style="flex-grow: 1; min-width: 150px;"> <!-- Allow slider to take more space -->
+            <label for="speedSlider" style="color: var(--control-text); margin-right: 8px;" title="Animation Speed (Faster ->)"><i class="fas fa-tachometer-alt"></i></label>
+            <input type="range" id="speedSlider" min="1" max="100" value="85" step="1" style="width: 100%; cursor: pointer;">
+            <output for="speedSlider" id="speedValue" style="color: var(--control-text); margin-left: 8px; font-weight: 500; min-width: 25px; text-align: right;">85</output>
+        </div>
+
+        <!-- Compare Button -->
         <div class="control-item">
             <button id="compareButton" onclick="showStatsPanel()" class="secondary"><i class="fas fa-chart-bar"></i> Compare Stats</button>
         </div>
     </div>
+
+
+
 
     <div id="status-message"></div>
 
     <canvas id="mazeCanvas"></canvas> <!-- Width/Height set in JS -->
 
     <!-- Info Button (Floating Action Button) -->
-    <button class="fab-info" onclick="showInfoPanel()" title="Show Help & Info">i</button>
+    <button class="fab-info" onclick="showInfoPanel()" title="Show Help & Info">Info</button>
 
     <!-- Info Panel Modal -->
     <div class="modal-overlay" id="infoOverlay">
@@ -494,13 +588,18 @@
         </div>
     </div>
 
-    <script>
+          
+<script>
         // ---=== Configuration ===---
-        const CELL_SIZE = 20; // Slightly smaller for potentially more cells
-        const MAZE_WIDTH_CELLS = 80; // Default width
-        const MAZE_HEIGHT_CELLS = 40; // Default height
-        const ANIMATION_DELAY_MS = 5; // Base delay for visited cells
-        const PATH_ANIMATION_DELAY_MS = 25; // Delay for drawing path segments
+        const CELL_SIZE = 20;
+        // let MAZE_WIDTH_CELLS = 80; // Default width - REMOVE/REPLACE
+        // let MAZE_HEIGHT_CELLS = 40; // Default height - REMOVE/REPLACE
+        // const ANIMATION_DELAY_MS = 5; // REMOVE - Will be dynamic
+        // const PATH_ANIMATION_DELAY_MS = 25; // REMOVE - Will be dynamic
+        const MAX_DELAY_MS = 100; // Slowest animation delay (for slider value 1)
+        const MIN_DELAY_MS = 1;   // Fastest animation delay (for slider value 100)
+        const PATH_DELAY_MULTIPLIER = 5; // How much slower the path drawing is compared to visited cells
+
 
         // ---=== DOM Elements ===---
         const canvas = document.getElementById('mazeCanvas');
@@ -514,12 +613,21 @@
         const infoOverlay = document.getElementById('infoOverlay');
         const statsOverlay = document.getElementById('statsOverlay');
         const statsContent = document.getElementById('statsContent');
-        const statsChartCanvas = document.getElementById('statsChart');
+        // const statsChartCanvas = document.getElementById('statsChart'); // Keep if using chart
+
+        // NEW DOM Elements
+        const mazeWidthInput = document.getElementById('mazeWidthInput');
+        const mazeHeightInput = document.getElementById('mazeHeightInput');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+
 
         // ---=== State Variables ===---
         let mazeData = null;
+        let MAZE_WIDTH_CELLS = parseInt(mazeWidthInput.value);   // Get initial value
+        let MAZE_HEIGHT_CELLS = parseInt(mazeHeightInput.value); // Get initial value
         let start = {x: 1, y: 1}; // Default start (adjust if 0,0 can be wall)
-        let end = {x: MAZE_WIDTH_CELLS - 2, y: MAZE_HEIGHT_CELLS - 2}; // Default end
+        let end = {x: MAZE_WIDTH_CELLS - 2, y: MAZE_HEIGHT_CELLS - 2}; // Default end based on initial size
         let isPaused = false;
         let isAnimating = false;
         let animationFrameId = null;
@@ -530,10 +638,11 @@
 
         // ---=== Stats Tracking ===---
         let algorithmStats = {}; // { algoName: { totalTime: 0, runCount: 0, lastTime: 0, lastRunDate: '' } }
-        let statsChart = null;
+        // let statsChart = null; // Keep if using chart
 
         // ---=== Maze Colors (from CSS Variables) ===---
-        const mazeColors = {
+        // ... (mazeColors object remains the same) ...
+         const mazeColors = {
             wall: getComputedStyle(document.documentElement).getPropertyValue('--color-wall').trim(),
             empty: getComputedStyle(document.documentElement).getPropertyValue('--color-empty').trim(),
             start: getComputedStyle(document.documentElement).getPropertyValue('--color-start').trim(),
@@ -545,15 +654,17 @@
             gridLine: '#eee' // Lighter grid lines
         };
 
+
         // ---=== Initialization ===---
         function initialize() {
-            setupCanvas();
+            // setupCanvas(); // Call setupCanvas within generateMaze initially
             addEventListeners();
-            generateMaze(); // Generate initial maze on load
+            updateSpeedValue(); // Initialize speed display
+            generateMaze(); // Generate initial maze on load using default input values
         }
 
         function setupCanvas() {
-            // Adjust canvas size based on constants
+            // Adjust canvas size based on CURRENT dimensions
             canvas.width = MAZE_WIDTH_CELLS * CELL_SIZE;
             canvas.height = MAZE_HEIGHT_CELLS * CELL_SIZE;
             ctx.lineCap = 'round'; // Nicer line endings
@@ -578,30 +689,97 @@
                     hideStatsPanel();
                 }
             });
+
+            // Listener for Speed Slider
+            speedSlider.addEventListener('input', updateSpeedValue);
         }
+
+        // NEW: Update speed display
+        function updateSpeedValue() {
+            speedValue.textContent = speedSlider.value;
+        }
+
+        // NEW: Calculate animation delay based on slider
+        function getAnimationDelay() {
+            const speed = parseInt(speedSlider.value); // Value from 1 (slow) to 100 (fast)
+            // Map speed (1-100) to delay (MAX_DELAY_MS - MIN_DELAY_MS)
+            // Higher speed = lower delay
+            const delayRange = MAX_DELAY_MS - MIN_DELAY_MS;
+            const baseDelay = MAX_DELAY_MS - ((speed - 1) / 99) * delayRange; // Map 1-100 to MAX-MIN delay
+
+            return {
+                visited: Math.max(MIN_DELAY_MS, baseDelay), // Ensure minimum delay
+                path: Math.max(MIN_DELAY_MS * PATH_DELAY_MULTIPLIER, baseDelay * PATH_DELAY_MULTIPLIER) // Path is slower
+            };
+        }
+
 
         // ---=== Maze Generation & Drawing ===---
         async function generateMaze() {
             if (isAnimating) {
                 cancelAnimation();
             }
+            algorithmStats = {}; // { algoName: { totalTime: 0, runCount: 0, lastTime: 0, lastRunDate: '' } }
+
             setStatus('Generating new maze...');
-            setControlsDisabled(true);
+            setControlsDisabled(true, true); // Disable size inputs during generation
+
+            // --- Get and validate dimensions ---
+            let newWidth = parseInt(mazeWidthInput.value);
+            let newHeight = parseInt(mazeHeightInput.value);
+            const minW = parseInt(mazeWidthInput.min);
+            const maxW = parseInt(mazeWidthInput.max);
+            const minH = parseInt(mazeHeightInput.min);
+            const maxH = parseInt(mazeHeightInput.max);
+
+            // Enforce min/max and ensure even numbers if step="2" (or just ensure >= min)
+            newWidth = Math.max(minW, Math.min(maxW, newWidth));
+             // Optional: Force even if step=2? For simplicity, just enforce bounds.
+            // newWidth = newWidth % 2 !== 0 ? newWidth + 1 : newWidth; // Example if even needed
+            newHeight = Math.max(minH, Math.min(maxH, newHeight));
+            // newHeight = newHeight % 2 !== 0 ? newHeight + 1 : newHeight;
+
+            // Update input values if they were clamped
+            mazeWidthInput.value = newWidth;
+            mazeHeightInput.value = newHeight;
+
+            // --- Update global dimensions ---
+            MAZE_WIDTH_CELLS = newWidth;
+            MAZE_HEIGHT_CELLS = newHeight;
+
+            // --- Recalculate default end point ---
+            // Ensure start/end are within new bounds (place them slightly inside)
+            start = {
+                x: Math.min(MAZE_WIDTH_CELLS - 2, Math.max(1, start.x)),
+                y: Math.min(MAZE_HEIGHT_CELLS - 2, Math.max(1, start.y))
+            };
+             // Make end relative to new size, ensure it's not same as start
+             let potentialEndX = MAZE_WIDTH_CELLS - 2;
+             let potentialEndY = MAZE_HEIGHT_CELLS - 2;
+             if (potentialEndX <= 0) potentialEndX = 1; // Handle very small mazes
+             if (potentialEndY <= 0) potentialEndY = 1;
+             if (potentialEndX === start.x && potentialEndY === start.y) {
+                 // rudimentary collision avoidance, shift end if same as start
+                 potentialEndY = Math.max(1, potentialEndY -1);
+                 if (potentialEndY === start.y) potentialEndX = Math.max(1, potentialEndX -1);
+             }
+             end = { x: potentialEndX, y: potentialEndY };
+
+
+            // --- Resize Canvas ---
+            setupCanvas(); // Resize canvas BEFORE fetching/drawing
 
             try {
-                // Adjust start/end if they are outside new potential bounds (if size changes)
-                // For fixed size, we just ensure they are within bounds
-                start = { x: Math.min(MAZE_WIDTH_CELLS, Math.max(0, start.x)), y: Math.min(MAZE_HEIGHT_CELLS, Math.max(0, start.y)) };
-                end = { x: Math.min(MAZE_WIDTH_CELLS, Math.max(0, end.x)), y: Math.min(MAZE_HEIGHT_CELLS, Math.max(0, end.y)) };
-
-                // Fetch maze from backend (replace with your actual endpoint)
+                // Fetch maze from backend using NEW dimensions
                  const response = await fetch(`/generate-maze?width=${MAZE_WIDTH_CELLS}&height=${MAZE_HEIGHT_CELLS}`);
                  if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                  mazeData = await response.json();
 
-                // Ensure start/end aren't walls (simple check, might need refinement based on generation)
-                // A robust way is to find the nearest non-wall cell if needed.
-                // Assuming the backend provides a valid maze structure where start/end are accessible.
+                // TODO: Add robust check: Ensure start/end aren't walls after generation.
+                // If mazeData[`${start.x},${start.y}`] doesn't exist, move start.
+                // If mazeData[`${end.x},${end.y}`] doesn't exist, move end.
+                // (Requires a helper function findNearestValidCell(x, y))
+                // For now, assume generator handles this or user can manually move them.
 
                 drawMaze();
                 setStatus('Maze generated. Select algorithm and click Solve.');
@@ -609,90 +787,122 @@
             } catch (error) {
                 console.error("Error generating maze:", error);
                 setStatus(`Error: ${error.message}. Please try again.`);
-                // Draw a blank canvas or error message?
+                // Draw a blank canvas or error message
                  ctx.fillStyle = 'white';
                  ctx.fillRect(0, 0, canvas.width, canvas.height);
                  ctx.fillStyle = 'red';
                  ctx.font = '16px ' + getComputedStyle(document.documentElement).getPropertyValue('--font-family').trim();
                  ctx.textAlign = 'center';
                  ctx.fillText('Failed to load maze.', canvas.width / 2, canvas.height / 2);
+                 mazeData = null; // Clear invalid maze data
             } finally {
-                 setControlsDisabled(false);
+                 setControlsDisabled(false); // Re-enable controls (including size inputs)
                  pausePlayButton.disabled = true; // Can't pause/play initially
             }
         }
 
-        function drawMaze() {
-          ctx.fillStyle = 'white';
+        // --- drawMaze, drawCell, drawPathSegment, drawStartEnd functions remain largely the same ---
+        // Make sure loops use MAZE_WIDTH_CELLS and MAZE_HEIGHT_CELLS
+       function drawMaze() {
+          ctx.fillStyle = mazeColors.empty; // Use variable
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
+
           // Draw grid
-          ctx.strokeStyle = '#ddd';
+          ctx.strokeStyle = mazeColors.gridLine; // Use variable
           ctx.lineWidth = 0.5;
-          for (let x = 0; x <= MAZE_WIDTH_CELLS; x++) {
+          for (let x = 0; x <= MAZE_WIDTH_CELLS; x++) { // Use variable
               ctx.beginPath();
               ctx.moveTo(x * CELL_SIZE, 0);
-              ctx.lineTo(x * CELL_SIZE, MAZE_HEIGHT_CELLS * CELL_SIZE);
+              ctx.lineTo(x * CELL_SIZE, MAZE_HEIGHT_CELLS * CELL_SIZE); // Use variable
               ctx.stroke();
           }
-          for (let y = 0; y <= MAZE_HEIGHT_CELLS; y++) {
+          for (let y = 0; y <= MAZE_HEIGHT_CELLS; y++) { // Use variable
               ctx.beginPath();
               ctx.moveTo(0, y * CELL_SIZE);
-              ctx.lineTo(MAZE_WIDTH_CELLS * CELL_SIZE, y * CELL_SIZE);
+              ctx.lineTo(MAZE_WIDTH_CELLS * CELL_SIZE, y * CELL_SIZE); // Use variable
               ctx.stroke();
           }
 
-          // Draw walls
-          ctx.strokeStyle = 'black';
-          ctx.lineWidth = 1.5;
-          for (const cellStr in mazeData.maze) {
-              const [x, y] = cellStr.split(',').map(Number);
-              const neighbors = mazeData.maze[cellStr].map(n => n.split(',').map(Number));
-              
-              // Check each direction for walls
-              if (!neighbors.some(([nx, ny]) => nx === x+1 && ny === y)) { // Right
-                  ctx.beginPath();
-                  ctx.moveTo((x+1)*CELL_SIZE, y*CELL_SIZE);
-                  ctx.lineTo((x+1)*CELL_SIZE, (y+1)*CELL_SIZE);
-                  ctx.stroke();
-              }
-              if (!neighbors.some(([nx, ny]) => nx === x && ny === y+1)) { // Down
-                  ctx.beginPath();
-                  ctx.moveTo(x*CELL_SIZE, (y+1)*CELL_SIZE);
-                  ctx.lineTo((x+1)*CELL_SIZE, (y+1)*CELL_SIZE);
-                  ctx.stroke();
-              }
-          }
-          drawStartEnd();
+          // Draw walls (assuming mazeData format remains the same)
+          if (mazeData && mazeData.maze) {
+              ctx.strokeStyle = mazeColors.wall; // Use variable for wall color
+              ctx.lineWidth = 2; // Slightly thicker walls might look better
 
+              // Pre-calculate wall segments for potential optimization?
+              // For now, stick to the original neighbor check logic:
+              for (const cellStr in mazeData.maze) {
+                    const [x, y] = cellStr.split(',').map(Number);
+                    // Get neighbors *safely*
+                    const neighbors = mazeData.maze[cellStr]?.map(n => n.split(',').map(Number)) || [];
+
+                     // Calculate cell bounds
+                    const cellX = x * CELL_SIZE;
+                    const cellY = y * CELL_SIZE;
+
+                    // Check for wall to the RIGHT (is [x+1, y] NOT a neighbor?)
+                    if (!neighbors.some(([nx, ny]) => nx === x + 1 && ny === y)) {
+                        ctx.beginPath();
+                        ctx.moveTo(cellX + CELL_SIZE, cellY);
+                        ctx.lineTo(cellX + CELL_SIZE, cellY + CELL_SIZE);
+                        ctx.stroke();
+                    }
+                    // Check for wall BELOW (is [x, y+1] NOT a neighbor?)
+                    if (!neighbors.some(([nx, ny]) => nx === x && ny === y + 1)) {
+                        ctx.beginPath();
+                        ctx.moveTo(cellX, cellY + CELL_SIZE);
+                        ctx.lineTo(cellX + CELL_SIZE, cellY + CELL_SIZE);
+                        ctx.stroke();
+                    }
+                     // Also draw TOP wall for row 0 cells
+                    if (y === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(cellX, cellY);
+                        ctx.lineTo(cellX + CELL_SIZE, cellY);
+                        ctx.stroke();
+                    }
+                    // Also draw LEFT wall for col 0 cells
+                    if (x === 0) {
+                         ctx.beginPath();
+                         ctx.moveTo(cellX, cellY);
+                         ctx.lineTo(cellX, cellY + CELL_SIZE);
+                         ctx.stroke();
+                    }
+                }
+
+          } else {
+             // Handle case where maze data is missing after generation attempt
+             console.warn("drawMaze called without valid mazeData.");
+          }
+
+          drawStartEnd(); // Draw start/end on top
+          ctx.lineWidth = 1; // Reset line width
       }
-      function drawStartEnd() {
-        // Start (violet)
-        ctx.fillStyle = 'violet';
-        ctx.fillRect(
-            start.x * CELL_SIZE + 1, 
-            start.y * CELL_SIZE + 1, 
-            CELL_SIZE - 1, 
-            CELL_SIZE - 1
-        );
-        
-        // End (blue)
-        ctx.fillStyle = 'rgb(231, 150, 0)';
-        ctx.fillRect(
-            end.x * CELL_SIZE + 1, 
-            end.y * CELL_SIZE + 1, 
-            CELL_SIZE - 1, 
-            CELL_SIZE - 1
-        );
-    }
+
+        function drawStartEnd() {
+            // Use drawCell for consistency
+            if (start) drawCell(start.x, start.y, mazeColors.start);
+            if (end) drawCell(end.x, end.y, mazeColors.end);
+        }
+
         function drawCell(x, y, color, sizeFactor = 0.85) {
             const inset = CELL_SIZE * (1 - sizeFactor) / 2;
             ctx.fillStyle = color;
             ctx.fillRect(
-              x * CELL_SIZE + 2, 
-              y * CELL_SIZE + 2, 
-              CELL_SIZE - 2, 
-              CELL_SIZE - 2  
+              x * CELL_SIZE + inset,
+              y * CELL_SIZE + inset,
+              CELL_SIZE - 1 * inset,
+              CELL_SIZE - 1 * inset
+            );
+        }
+
+        function drawCell1(x, y, color, sizeFactor = 0.85) {
+            const inset = CELL_SIZE * (1 - sizeFactor) / 2;
+            ctx.fillStyle = color;
+            ctx.fillRect(
+              x * CELL_SIZE + inset,
+              y * CELL_SIZE + inset,
+              CELL_SIZE - 2 * inset,
+              CELL_SIZE - 2 * inset
             );
         }
 
@@ -703,70 +913,103 @@
             const centerY2 = toY * CELL_SIZE + CELL_SIZE / 2;
 
             ctx.strokeStyle = color;
-            ctx.lineWidth = CELL_SIZE * 0.3; // Thicker line for path
+            ctx.lineWidth = CELL_SIZE * 0.20; // Slightly thicker path
             ctx.beginPath();
             ctx.moveTo(centerX1, centerY1);
             ctx.lineTo(centerX2, centerY2);
             ctx.stroke();
-             ctx.lineWidth = 1; // Reset for other drawing
+            ctx.lineWidth = 1; // Reset for other drawing
         }
 
         // ---=== Maze Solving & Animation ===---
+        // ... (solveMaze function remains mostly the same, fetching solution) ...
         async function solveMaze() {
             if (!mazeData || isAnimating) return;
 
+            // Ensure start/end are valid cells in the current mazeData
+             const startKey = `${start.x},${start.y}`;
+             const endKey = `${end.x},${end.y}`;
+             if (!mazeData.maze[startKey] || !mazeData.maze[endKey]) {
+                 setStatus("Error: Start or End point is invalid (possibly a wall). Please reset them (Shift/Ctrl+Click).");
+                 return;
+             }
+
+
             const algorithm = algorithmSelect.value;
             setStatus(`Solving with ${algorithm}...`);
-            setControlsDisabled(true); // Disable controls during solve fetch & setup
+            setControlsDisabled(true, true); // Disable size inputs during solve
             pausePlayButton.disabled = false; // Enable pause/play
 
             try {
                 const startTime = performance.now();
-                // Fetch solution from backend (replace with your actual endpoint)
+                // Fetch solution from backend
                 const response = await fetch('/solve', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         maze: mazeData,
-                        start: `${start.x},${start.y}`,
-                        end: `${end.x},${end.y}`,
+                        start: startKey, // Use key format
+                        end: endKey,     // Use key format
                         algorithm: algorithm
                     })
                 });
 
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const result = await response.json();
-                console.log(result.maxspace);
+                console.log("Solve result:", result); // Debugging
                 const endTime = performance.now();
-                const executionTime = endTime - startTime; // Time includes fetch + backend solve
+                // const executionTime = endTime - startTime; // Time includes fetch + backend solve
 
                 if (!result || !result.visited || !result.path) {
-                    throw new Error("Invalid response received from server.");
+                    // Check for specific error message from backend if available
+                    if (result && result.error) {
+                        throw new Error(`Solver Error: ${result.error}`);
+                    }
+                    throw new Error("Invalid response received from solver.");
                 }
 
-                updateAlgorithmStats(algorithm, result.maxspace, result.visitedlength, result.lenpath); // Record stats
+                // updateAlgorithmStats(algorithm, result.maxspace, result.visitedlength, result.lenpath); // Record stats - Use correct keys
+                console.log(result.lenpath);
+                updateAlgorithmStats(algorithm ,result.maxspace ,result.visitedlength ,result.lenpath);
+
 
                 // Prepare animation queue
                 animationQueue = [];
-                result.visited.forEach(cellStr => {
+                (result.visited || []).forEach(cellStr => { // Use default empty array
                     const [x, y] = cellStr.split(',').map(Number);
-                    if (x !== start.x || y !== start.y) { // Don't animate over start/end initially
+                    // Don't animate start/end cells initially during visited phase
+                    if (x !== start.x || y !== start.y) {
                          if (x !== end.x || y !== end.y) {
                             animationQueue.push({ type: 'visited', x, y });
                          }
                     }
                 });
 
-                for (let i = 0; i < result.path.length - 1; i++) {
-                    const [x1, y1] = result.path[i].split(',').map(Number);
-                    const [x2, y2] = result.path[i + 1].split(',').map(Number);
-                     // Animate path segments *backwards* from end to start for effect
-                    animationQueue.push({ type: 'path', x: x1, y: y1, prevX: x2, prevY: y2 });
+                // Add path steps to queue (draw segments)
+                // Path is usually [start, ..., end] - we animate segments
+                const pathCoords = (result.path || []).map(cellStr => cellStr.split(',').map(Number));
+                for (let i = 0; i < pathCoords.length - 1; i++) {
+                    const [x1, y1] = pathCoords[i];
+                    const [x2, y2] = pathCoords[i+1];
+                    // Add segment from path[i] to path[i+1]
+                     animationQueue.push({ type: 'path', x: x2, y: y2, prevX: x1, prevY: y1 });
                 }
 
-                // Redraw the base maze before starting animation
-                drawMaze();
-                startAnimation();
+                 // Handle no path found case - display message
+                 if (pathCoords.length === 0 && result.visited && result.visited.length > 0) {
+                     setStatus(`No path found using ${algorithm}. Visualization shows explored cells.`);
+                      // Start animation anyway to show visited cells
+                     drawMaze(); // Redraw base maze
+                     startAnimation();
+                 } else if (pathCoords.length > 0) {
+                    // Redraw the base maze before starting animation
+                    drawMaze();
+                    startAnimation();
+                 } else {
+                    // No visited, no path - likely error or instant fail?
+                    throw new Error("Solver returned no visited cells and no path.");
+                 }
+
 
             } catch (error) {
                 console.error("Error solving maze:", error);
@@ -785,6 +1028,7 @@
             lastTimestamp = performance.now();
             timeAccumulator = 0;
             setStatus('Visualizing...');
+            setControlsDisabled(true, true); // Disable size inputs during animation
             animationFrameId = requestAnimationFrame(animationLoop);
         }
 
@@ -797,36 +1041,51 @@
             if (!isPaused) {
                 timeAccumulator += deltaTime;
 
-                let delay = (animationQueue[currentAnimationStep]?.type === 'path') ? PATH_ANIMATION_DELAY_MS : ANIMATION_DELAY_MS;
+                // --- Get current delay based on slider ---
+                const delays = getAnimationDelay();
+                let currentStepDelay = (animationQueue[currentAnimationStep]?.type === 'path')
+                                     ? delays.path
+                                     : delays.visited;
 
                 // Process steps based on accumulated time
-                while (timeAccumulator >= delay && currentAnimationStep < animationQueue.length) {
-                     if (!isAnimating) return; // Check again inside loop
+                // Allow processing multiple steps per frame if delay is very short
+                while (isAnimating && !isPaused && timeAccumulator >= currentStepDelay && currentAnimationStep < animationQueue.length) {
 
                     const step = animationQueue[currentAnimationStep];
 
                     if (step.type === 'visited') {
-                        // Use a slightly darker 'visiting' color during animation
-                        drawCell(step.x, step.y, mazeColors.visiting, 0.75);
+                        // Draw visited cell (don't overwrite start/end)
+                        if ((step.x !== start.x || step.y !== start.y) && (step.x !== end.x || step.y !== end.y)) {
+                           drawCell(step.x, step.y, mazeColors.visiting, 0.75);
+                        }
+                         // Update delay for the *next* potential step in this frame
+                         currentStepDelay = delays.visited;
+
                     } else if (step.type === 'path') {
                         // Draw the path segment
                         drawPathSegment(step.prevX, step.prevY, step.x, step.y, mazeColors.pathTrace);
-                        // Overdraw the cell itself with the final path color for clarity
-                        drawCell(step.x, step.y, mazeColors.path, 0.6);
-                         // Also draw the previous cell (important for the first segment)
-                        drawCell(step.prevX, step.prevY, mazeColors.path, 0.6);
+                        // Overdraw the cells involved with the final path color for clarity
+                        // Don't overwrite start/end during path trace either
+                         if (step.x !== start.x || step.y !== start.y) drawCell1(step.x, step.y, mazeColors.path, 0.6);
+                         if (step.prevX !== start.x || step.prevY !== start.y) drawCell1(step.prevX, step.prevY, mazeColors.path, 0.6);
 
-                         // Change delay for next step if needed
-                         delay = PATH_ANIMATION_DELAY_MS;
+                        // Update delay for the *next* potential step in this frame
+                         currentStepDelay = delays.path;
                     }
 
-                    timeAccumulator -= delay;
+                    timeAccumulator -= currentStepDelay; // Use the delay of the step just processed
                     currentAnimationStep++;
+
+                     // Re-check delay for the next step *before* potentially looping again
+                    if (currentAnimationStep < animationQueue.length) {
+                        currentStepDelay = (animationQueue[currentAnimationStep]?.type === 'path')
+                                         ? delays.path
+                                         : delays.visited;
+                    }
                 }
 
                 // Redraw start/end points on top each frame during animation
-                drawCell(start.x, start.y, mazeColors.start);
-                drawCell(end.x, end.y, mazeColors.end);
+                drawStartEnd(); // Use the dedicated function
 
                 if (currentAnimationStep >= animationQueue.length) {
                     finishAnimation();
@@ -834,8 +1093,10 @@
                 }
             }
 
-            // Request next frame
-             animationFrameId = requestAnimationFrame(animationLoop);
+            // Request next frame only if still animating
+            if (isAnimating) {
+                animationFrameId = requestAnimationFrame(animationLoop);
+            }
         }
 
 
@@ -843,21 +1104,22 @@
             isAnimating = false;
             isPaused = false;
             setStatus('Visualization complete.');
-            setControlsDisabled(false);
+            setControlsDisabled(false); // Re-enable ALL controls
             pausePlayButton.disabled = true;
             updatePausePlayButton();
 
-            // Optional: Redraw final state crisply
+            // Optional: Redraw final state crisply with non-visiting colors
+            // Need to iterate through the *final* state from the result if needed,
+            // or simply ensure the last path cells are drawn correctly.
+            // The current loop already draws path cells, just ensure start/end are on top.
 
-            // Ensure start/end are on top
-            drawCell(start.x, start.y, mazeColors.start);
-            drawCell(end.x, end.y, mazeColors.end);
+            drawStartEnd(); // Ensure start/end are on top
 
-             animationQueue = []; // Clear queue
+            animationQueue = []; // Clear queue
             currentAnimationStep = 0;
-             timeAccumulator = 0;
-             if (animationFrameId) cancelAnimationFrame(animationFrameId);
-             animationFrameId = null;
+            timeAccumulator = 0;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
         }
 
 
@@ -874,7 +1136,7 @@
                 timeAccumulator = 0;
                 drawMaze(); // Restore maze to pre-animation state
                 setStatus('Animation cancelled.');
-                setControlsDisabled(false);
+                setControlsDisabled(false); // Re-enable ALL controls
                 pausePlayButton.disabled = true;
                 updatePausePlayButton();
             }
@@ -884,16 +1146,23 @@
             if (!isAnimating) return;
             isPaused = !isPaused;
             updatePausePlayButton();
-             setStatus(isPaused ? 'Paused' : 'Visualizing...');
-             if (!isPaused) {
-                 // Ensure the loop restarts immediately if unpausing
+            setStatus(isPaused ? 'Paused' : 'Visualizing...');
+            if (!isPaused) {
+                 // Ensure the loop restarts smoothly if unpausing
                  lastTimestamp = performance.now(); // Reset timestamp to avoid jump
-                 animationFrameId = requestAnimationFrame(animationLoop);
-             }
+                 if (!animationFrameId) { // Only request if not already running
+                    animationFrameId = requestAnimationFrame(animationLoop);
+                 }
+            } else {
+                 // Clear pending frame when pausing
+                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                 animationFrameId = null;
+            }
         }
 
         function updatePausePlayButton() {
-            if (isPaused) {
+            // ... (logic remains the same) ...
+             if (isPaused) {
                 pausePlayButton.innerHTML = '<i class="fas fa-play"></i> Play';
                 pausePlayButton.title = 'Resume Animation';
             } else {
@@ -902,13 +1171,18 @@
             }
         }
 
-        function setControlsDisabled(disabled) {
+        // Modified to optionally disable size inputs
+        function setControlsDisabled(disabled, disableSizeInputs = false) {
              newMazeBtn.disabled = disabled;
              solveBtn.disabled = disabled;
              algorithmSelect.disabled = disabled;
+             // Disable size inputs only when generating/solving/animating
+             mazeWidthInput.disabled = disableSizeInputs;
+             mazeHeightInput.disabled = disableSizeInputs;
              // Don't disable compare stats button
+             // Don't disable speed slider (allow adjustment during pause)
              // Pause button is handled separately based on animation state
-             pausePlayButton.disabled = !isAnimating || disabled; // Disable if not animating or if other controls are disabled
+             //pausePlayButton.disabled = !isAnimating || disabled; // Disable if not animating or if other controls are disabled
         }
 
         function setStatus(message) {
@@ -929,20 +1203,22 @@
             // Ensure click is within bounds
             if (x < 0 || x >= MAZE_WIDTH_CELLS || y < 0 || y >= MAZE_HEIGHT_CELLS) return;
 
-            // Check if the clicked cell is a wall (using mazeData)
+            // Check if the clicked cell is potentially a wall (using mazeData)
              const cellKey = `${x},${y}`;
-             if (!mazeData || !mazeData.maze || !mazeData.maze[cellKey]) {
-                 setStatus("Cannot place start/end point on a wall.");
+             // Allow setting start/end even if mazeData isn't fully loaded yet,
+             // but check if mazeData exists and the cell is invalid *if* data is present.
+             if (mazeData && mazeData.maze && !mazeData.maze[cellKey]) {
+                 setStatus("Cannot place start/end point on a wall or outside maze bounds.");
                  // Add a visual indication maybe?
-                  canvas.style.border = '2px solid red';
-                  setTimeout(() => canvas.style.border = 'none', 300);
+                  canvas.style.outline = '2px solid red'; // Use outline instead of border
+                  setTimeout(() => canvas.style.outline = 'none', 300);
                  return;
              }
 
 
             let changed = false;
             if (e.shiftKey) { // Set Start Point
-                if (x !== end.x || y !== end.y) { // Cannot be same as end
+                if (x !== end?.x || y !== end?.y) { // Cannot be same as end (use optional chaining)
                     start = {x, y};
                     changed = true;
                     setStatus(`Start point set to (${x}, ${y}).`);
@@ -950,7 +1226,7 @@
                    setStatus("Start and End points cannot be the same.");
                 }
             } else if (e.ctrlKey || e.metaKey) { // Set End Point (Ctrl or Cmd)
-                 if (x !== start.x || y !== start.y) { // Cannot be same as start
+                 if (x !== start?.x || y !== start?.y) { // Cannot be same as start
                     end = {x, y};
                     changed = true;
                     setStatus(`End point set to (${x}, ${y}).`);
@@ -960,76 +1236,144 @@
             }
 
             if (changed) {
-                drawMaze(); // Redraw the maze with new start/end
+                // Redraw only the start/end points if maze exists, otherwise full redraw might be needed
+                if (mazeData) {
+                    // Optimization: Just redraw affected cells and start/end
+                    // For simplicity now, just redraw the relevant parts
+                    drawMaze(); // Redraw base maze to clear old start/end visuals
+                    // drawStartEnd(); // drawMaze now calls this
+                } else {
+                    // If maze hasn't been generated, a full draw might be needed
+                    // but usually generateMaze() handles the first draw.
+                    console.warn("Canvas clicked before initial maze generation.");
+                }
             }
         }
 
         // ---=== Info/Stats Panel Logic ===---
-        function showInfoPanel() {
-            infoOverlay.classList.add('visible');
+        // ... (show/hide functions remain the same) ...
+        // ---=== Info/Stats Panel Logic ===---
+    function showInfoPanel() { infoOverlay.classList.add('visible'); }
+    function hideInfoPanel() { infoOverlay.classList.remove('visible'); }
+
+    function showStatsPanel() {
+        // Check if any stats exist before showing
+        if (Object.keys(algorithmStats).length === 0) {
+            setStatus("Run at least one algorithm first to see stats.");
+            // Optionally, briefly flash the button or show a tooltip?
+            return; // Don't show the panel if empty
         }
-        function hideInfoPanel() {
-             infoOverlay.classList.remove('visible');
-        }
-        function showStatsPanel() {
-            updateStatsPanel(); // Refresh stats before showing
-            statsOverlay.classList.add('visible');
-        }
-        function hideStatsPanel() {
-            statsOverlay.classList.remove('visible');
+        updateStatsPanel(); // Refresh content before showing
+        statsOverlay.classList.add('visible');
+    }
+    function hideStatsPanel() { statsOverlay.classList.remove('visible'); }
+
+    /**
+     * FIX: Stores the statistics for a completed algorithm run.
+     * Uses the keys EXACTLY as received from the Flask backend ('maxspace', 'visitedlength', 'lenpath').
+     * Parses values to ensure they are numbers or stores a placeholder ('N/A' or 0).
+     */
+    function updateAlgorithmStats(algorithm, maxspace, visitedlength, lenpath) {
+         // Helper to ensure stats are numbers or a known placeholder
+         const parseStat = (val) => (typeof val === 'number' ? val : 'N/A');
+
+        algorithmStats[algorithm] = {
+            // Store using the keys received from Flask
+            maxspace: parseStat(maxspace),
+            visitedlength: parseStat(visitedlength),
+            // Store path length: 0 means no path found, >0 is the length
+            lenpath: typeof lenpath === 'number' ? lenpath : 0
+        };
+         // Enable the compare button once the first set of stats is available
+         compareButton.disabled = false;
+         console.log("Updated Stats:", algorithmStats); // Log for debugging
+    }
+
+    /**
+     * FIX: Updates the HTML content of the stats panel modal.
+     * Reads stats using the correct keys ('maxspace', 'visitedlength', 'lenpath').
+     * Handles 'N/A' values and distinguishes between 'No Path' (lenpath 0) and valid paths.
+     * Highlights the shortest path found among the runs.
+     */
+    function updateStatsPanel() {
+        const algos = Object.keys(algorithmStats); // Get names of algorithms that have run
+
+        // Handle the case where no algorithms have been run yet
+        if (algos.length === 0) {
+            statsContent.innerHTML = '<p class="no-stats">Run at least one algorithm on the current maze to see comparison statistics.</p>';
+            compareButton.disabled = true; // Keep compare button disabled
+            return;
         }
 
-        function updateAlgorithmStats(algorithm, maxspace, visitedlength, lenpath) {
-          // simply overwrite with the latest run’s metrics
-          algorithmStats[algorithm] = {
-              maxspace,
-              visitedlength,
-              lenpath
-          };
-      }
-
-        function updateStatsPanel() {
-          const algos = Object.keys(algorithmStats);
-      
-          if (algos.length === 0) {
-              statsContent.innerHTML = 
-                '<p class="no-stats">Run at least one algorithm to see comparison statistics here.</p>';
-              return;
-          }
-      
-          let html = `
+        // Start building the HTML table
+        let html = `
+            <p id="statsModalDesc" style="text-align: center; margin-bottom: 20px; color: #555;">Comparison for the current ${MAZE_WIDTH_CELLS}x${MAZE_HEIGHT_CELLS} maze.</p>
             <table class="stats-table">
-              <thead>
+            <thead>
                 <tr>
-                  <th>Algorithm</th>
-                  <th>Max Space</th>
-                  <th>Visited Length</th>
-                  <th>Path Length</th>
+                <th>Algorithm</th>
+                <th>Max Structure Size</th>
+                <th>Cells Visited</th>
+                <th>Path Length</th>
                 </tr>
-              </thead>
-              <tbody>
-          `;
-      
-          algos.sort();
-          algos.forEach(algo => {
-            const s = algorithmStats[algo];
+            </thead>
+            <tbody>
+        `;
+
+        // Find the shortest *valid* path length among all runs
+        let shortestPath = Infinity;
+        algos.forEach(algo => {
+            const pathLen = algorithmStats[algo].lenpath; // Read correct key
+             // Only consider positive numbers as valid path lengths for comparison
+             if (typeof pathLen === 'number' && pathLen > 0) {
+                 shortestPath = Math.min(shortestPath, pathLen);
+             }
+        });
+         // If shortestPath is still Infinity, no valid paths were found
+         if (shortestPath === Infinity) shortestPath = -1;
+
+        // Sort algorithms alphabetically for consistent display
+        algos.sort();
+
+        // Create a table row for each algorithm run
+        algos.forEach(algo => {
+            const stats = algorithmStats[algo];
+            const pathLen = stats.lenpath; // Read correct key
+            // Determine if a valid path was found (length > 0)
+            const noPathFound = !(typeof pathLen === 'number' && pathLen > 0);
+            // Check if this algorithm found the shortest path
+            const isShortest = !noPathFound && pathLen === shortestPath;
+
+             // Apply CSS classes for highlighting
+             let rowClass = '';
+             if (isShortest) rowClass = 'class="shortest-path"'; // Highlight shortest
+             else if (noPathFound) rowClass = 'class="no-path"'; // Style rows with no path
+
+            // Add the table row HTML
             html += `
-              <tr>
-                <td>${algo.replace(/_/g, ' ')}</td>
-                <td>${s.maxspace}</td>
-                <td>${s.visitedlength}</td>
-                <td>${s.lenpath}</td>
-              </tr>
+            <tr ${rowClass}>
+                <td>${algo.replace(/_/g, ' ')}</td> <!-- Display name nicely -->
+                <td>${stats.maxspace === 'N/A' ? '-' : stats.maxspace}</td> <!-- Handle N/A -->
+                <td>${stats.visitedlength === 'N/A' ? '-' : stats.visitedlength}</td> <!-- Handle N/A -->
+                <td>${noPathFound ? 'No Path' : pathLen}</td> <!-- Display 'No Path' or length -->
+            </tr>
             `;
-          });
-      
-          html += `</tbody></table>`;
-          statsContent.innerHTML = html;
-      }
+        });
+
+        html += `</tbody></table>`; // Close table body
+
+         
+
+        // Update the modal content and ensure the compare button is enabled
+        statsContent.innerHTML = html;
+        compareButton.disabled = false;
+    }
         // ---=== Start the Application ===---
         document.addEventListener('DOMContentLoaded', initialize);
 
     </script>
+
+    
 </body>
 </html>
 

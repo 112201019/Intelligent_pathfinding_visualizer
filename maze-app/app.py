@@ -10,10 +10,30 @@ def index():
 
 @app.route('/generate-maze')
 def generate_maze_route():
-    maze = generate_maze(80, 40)
-    serialized = {f"{x},{y}": [f"{n[0]},{n[1]}" for n in neighbors] for (x, y), neighbors in maze.items()}
-    return jsonify({'maze': serialized})
+    try:
+        # --- FIX: Read width and height from query parameters ---
+        default_width, default_height = 80, 40
+        min_dim, max_dim = 10, 250 # Server-side limits
 
+        width = request.args.get('width', default=default_width, type=int)
+        height = request.args.get('height', default=default_height, type=int)
+
+        # Clamp values to server limits
+        width = max(min_dim, min(max_dim, width))
+        height = max(min_dim, min(max_dim, height))
+        # print(f"Generating maze with size: {width}x{height}") # Server log
+
+        # --- FIX: Pass the received width and height to the generator ---
+        maze = generate_maze(width, height)
+
+        # Serialize keys as strings "x,y" for JSON compatibility
+        serialized = {f"{x},{y}": [f"{n[0]},{n[1]}" for n in neighbors]
+                      for (x, y), neighbors in maze.items()}
+
+        return jsonify({'maze': serialized})
+    except Exception as e:
+        print(f"Error in /generate-maze: {e}")
+        return jsonify({'error': f'Server error during maze generation: {str(e)}'}), 500
 @app.route('/solve', methods=['POST'])
 def solve():
     data = request.json
@@ -23,6 +43,7 @@ def solve():
         start = tuple(map(int, data['start'].split(',')))
         end = tuple(map(int, data['end'].split(',')))
         algorithm=data['algorithm']
+        print(algorithm)
         maze = {}
         for cell_str, neighbors_str in maze_data.items():
             x, y = map(int, cell_str.split(','))
@@ -35,9 +56,9 @@ def solve():
             visited, path, maxspace, visitedlength, lenpath= a_starM(maze, start, end)
         elif algorithm=="A*_Euclidean":
             visited, path, maxspace, visitedlength, lenpath= a_starE(maze, start, end)
-        elif algorithm=="A*_cheby":
+        elif algorithm=="A*_chebyshev":
             visited, path, maxspace, visitedlength, lenpath= a_starC(maze, start, end)
-        elif algorithm=="A*_wall":
+        elif algorithm=="A*_ManhattanWallHeuristic":
             visited, path, maxspace, visitedlength, lenpath= a_star_enhanced(maze, start, end, 1)
             
         
@@ -55,4 +76,4 @@ def solve():
         return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True, host="10.32.5.70", port=5000)
+    app.run(debug=True)
