@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>City Path Finder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    function CityPathFinder() {
+        // City graph data - represents intersections and roads with distances
+        const cityGraph = {
+          nodes: [
+            { id: 'A', x: 100, y: 100, name: 'Town Square' },
+            { id: 'B', x: 250, y: 80, name: 'Market District' },
+            { id: 'C', x: 400, y: 120, name: 'Central Park' },
+            { id: 'D', x: 120, y: 220, name: 'Train Station' },
+            { id: 'E', x: 280, y: 230, name: 'City Hall' },
+            { id: 'F', x: 420, y: 250, name: 'University' },
+            { id: 'G', x: 180, y: 350, name: 'Shopping Mall' },
+            { id: 'H', x: 330, y: 380, name: 'Hospital' },
+            { id: 'I', x: 480, y: 370, name: 'Stadium' },
+          ],
+          edges: [
+            { source: 'A', target: 'B', distance: 5 },
+            { source: 'A', target: 'D', distance: 4 },
+            { source: 'B', target: 'C', distance: 5 },
+            { source: 'B', target: 'E', distance: 6 },
+            { source: 'C', target: 'F', distance: 4 },
+            { source: 'D', target: 'E', distance: 3 },
+            { source: 'D', target: 'G', distance: 5 },
+            { source: 'E', target: 'F', distance: 6 },
+            { source: 'E', target: 'H', distance: 7 },
+            { source: 'F', target: 'I', distance: 4 },
+            { source: 'G', target: 'H', distance: 3 },
+            { source: 'H', target: 'I', distance: 5 },
+          ]
+        };
+      
+        const [startNode, setStartNode] = useState(null);
+        const [endNode, setEndNode] = useState(null);
+        const [visitedNodes, setVisitedNodes] = useState([]);
+        const [shortestPath, setShortestPath] = useState([]);
+        const [algorithmStep, setAlgorithmStep] = useState(0);
+        const [dijkstraSteps, setDijkstraSteps] = useState([]);
+        const [isRunning, setIsRunning] = useState(false);
+        const [isPathFound, setIsPathFound] = useState(false);
+      
+        // Convert graph to adjacency list format
+        const createAdjacencyList = () => {
+          const adjacencyList = {};
+          cityGraph.nodes.forEach(node => {
+            adjacencyList[node.id] = [];
+          });
+      
+          cityGraph.edges.forEach(edge => {
+            adjacencyList[edge.source].push({ node: edge.target, weight: edge.distance });
+            adjacencyList[edge.target].push({ node: edge.source, weight: edge.distance }); // Undirected graph
+          });
+      
+          return adjacencyList;
+        };
+      
+        // Dijkstra's algorithm implementation
+        const dijkstra = (start, end) => {
+          const graph = createAdjacencyList();
+          const distances = {};
+          const previous = {};
+          const unvisited = new Set();
+          const steps = [];
+          
+          // Initialize
+          cityGraph.nodes.forEach(node => {
+            distances[node.id] = node.id === start ? 0 : Infinity;
+            previous[node.id] = null;
+            unvisited.add(node.id);
+          });
+          
+          // Record initial state
+          steps.push({
+            currentNode: null,
+            distances: {...distances},
+            visited: [],
+            unvisited: [...unvisited],
+            previous: {...previous}
+          });
+          
+          while (unvisited.size > 0) {
+            // Find node with minimum distance
+            let currentNode = null;
+            let minDistance = Infinity;
+            
+            unvisited.forEach(node => {
+              if (distances[node] < minDistance) {
+                minDistance = distances[node];
+                currentNode = node;
+              }
+            });
+            
+            // If we can't find a node or we've reached the end node
+            if (currentNode === null || currentNode === end) break;
+            
+            // Remove from unvisited set
+            unvisited.delete(currentNode);
+            const visitedSoFar = cityGraph.nodes
+              .filter(node => !unvisited.has(node.id))
+              .map(node => node.id);
+            
+            // Update distances to neighbors
+            graph[currentNode].forEach(neighbor => {
+              if (unvisited.has(neighbor.node)) {
+                const alt = distances[currentNode] + neighbor.weight;
+                if (alt < distances[neighbor.node]) {
+                  distances[neighbor.node] = alt;
+                  previous[neighbor.node] = currentNode;
+                }
+              }
+            });
+            
+            // Record this step
+            steps.push({
+              currentNode,
+              distances: {...distances},
+              visited: [...visitedSoFar],
+              unvisited: [...unvisited],
+              previous: {...previous}
+            });
+          }
+          
+          // Construct shortest path
+          const path = [];
+          let current = end;
+          
+          while (current !== null) {
+            path.unshift(current);
+            current = previous[current];
+          }
+          
+          const finalStep = {
+            currentNode: end,
+            distances: {...distances},
+            visited: cityGraph.nodes
+              .filter(node => !unvisited.has(node.id))
+              .map(node => node.id),
+            unvisited: [...unvisited],
+            previous: {...previous},
+            shortestPath: path.length > 1 && path[0] === start ? path : []
+          };
+          
+          steps.push(finalStep);
+          
+          return steps;
+        };
+      
+        const handleNodeClick = (nodeId) => {
+          if (!startNode) {
+            setStartNode(nodeId);
+          } else if (!endNode) {
+            setEndNode(nodeId);
+          }
+        };
+      
+        const runAlgorithm = () => {
+          if (startNode && endNode) {
+            const steps = dijkstra(startNode, endNode);
+            setDijkstraSteps(steps);
+            setAlgorithmStep(0);
+            setIsRunning(true);
+            setIsPathFound(false);
+          }
+        };
+      
+        const resetSelection = () => {
+          setStartNode(null);
+          setEndNode(null);
+          setVisitedNodes([]);
+          setShortestPath([]);
+          setAlgorithmStep(0);
+          setDijkstraSteps([]);
+          setIsRunning(false);
+          setIsPathFound(false);
+        };
+      
+        // Step through the algorithm visualization
+        useEffect(() => {
+          if (isRunning && dijkstraSteps.length > 0) {
+            if (algorithmStep < dijkstraSteps.length) {
+              const currentStep = dijkstraSteps[algorithmStep];
+              setVisitedNodes(currentStep.visited);
+              
+              if (algorithmStep === dijkstraSteps.length - 1) {
+                setShortestPath(currentStep.shortestPath);
+                setIsPathFound(true);
+                setIsRunning(false);
+              }
+      
+              const timer = setTimeout(() => {
+                setAlgorithmStep(prev => prev + 1);
+              }, 800);
+              
+              return () => clearTimeout(timer);
+            }
+          }
+        }, [algorithmStep, dijkstraSteps, isRunning]);
+      
+        // Find node by ID
+        const getNodeById = (id) => {
+          return cityGraph.nodes.find(node => node.id === id);
+        };
+      
+        // Get edge between two nodes
+        const getEdge = (source, target) => {
+          return cityGraph.edges.find(edge => 
+            (edge.source === source && edge.target === target) || 
+            (edge.source === target && edge.target === source)
+          );
+        };
+      
+        // Check if node is in path
+        const isInPath = (nodeId) => {
+          return shortestPath.includes(nodeId);
+        };
+      
+        // Check if edge is in path
+        const isEdgeInPath = (source, target) => {
+          if (shortestPath.length < 2) return false;
+          
+          for (let i = 0; i < shortestPath.length - 1; i++) {
+            if ((shortestPath[i] === source && shortestPath[i+1] === target) ||
+                (shortestPath[i] === target && shortestPath[i+1] === source)) {
+              return true;
+            }
+          }
+          return false;
+        };
+      
+        // Get node status
+        const getNodeStatus = (nodeId) => {
+          if (nodeId === startNode) return 'start';
+          if (nodeId === endNode) return 'end';
+          if (isInPath(nodeId)) return 'path';
+          if (visitedNodes.includes(nodeId)) return 'visited';
+          return 'unvisited';
+        };
+      
+        // Create city buildings (visual representations)
+        const renderBuildings = () => {
+          return cityGraph.nodes.map(node => {
+            const status = getNodeStatus(node.id);
+            let bgColor = 'bg-gray-300';
+            
+            if (status === 'start') bgColor = 'bg-green-500';
+            else if (status === 'end') bgColor = 'bg-red-500';
+            else if (status === 'path') bgColor = 'bg-yellow-500';
+            else if (status === 'visited') bgColor = 'bg-blue-300';
+            
+            return (
+              <g key={node.id} onClick={() => handleNodeClick(node.id)}>
+                <rect 
+                  x={node.x - 20} 
+                  y={node.y - 20} 
+                  width="40" 
+                  height="40" 
+                  rx="5"
+                  className={`${bgColor} hover:stroke-blue-600 hover:stroke-2 cursor-pointer`}
+                />
+                <text 
+                  x={node.x} 
+                  y={node.y + 5} 
+                  textAnchor="middle" 
+                  className="text-xs font-bold"
+                >
+                  {node.id}
+                </text>
+              </g>
+            );
+          });
+        };
+      
+        // Create roads between buildings
+        const renderRoads = () => {
+          return cityGraph.edges.map((edge, index) => {
+            const sourceNode = getNodeById(edge.source);
+            const targetNode = getNodeById(edge.target);
+            const midX = (sourceNode.x + targetNode.x) / 2;
+            const midY = (sourceNode.y + targetNode.y) / 2;
+            
+            // Check if this edge is part of the shortest path
+            const isPathEdge = isEdgeInPath(edge.source, edge.target);
+            
+            return (
+              <g key={`edge-${index}`}>
+                <line 
+                  x1={sourceNode.x} 
+                  y1={sourceNode.y} 
+                  x2={targetNode.x} 
+                  y2={targetNode.y} 
+                  className={`stroke-2 ${isPathEdge ? 'stroke-yellow-500' : 'stroke-gray-400'}`}
+                />
+                <circle 
+                  cx={midX} 
+                  cy={midY} 
+                  r="10" 
+                  className="fill-white stroke-gray-400"
+                />
+                <text 
+                  x={midX} 
+                  y={midY + 4} 
+                  textAnchor="middle" 
+                  className="text-xs"
+                >
+                  {edge.distance}
+                </text>
+              </g>
+            );
+          });
+        };
+      
+        const renderLegend = () => {
+          return (
+            <div className="absolute top-4 right-4 bg-white p-2 rounded-md shadow-md">
+              <div className="text-sm font-bold mb-1">Legend:</div>
+              <div className="flex items-center mb-1">
+                <div className="w-4 h-4 bg-green-500 mr-2"></div>
+                <span className="text-xs">Start Node</span>
+              </div>
+              <div className="flex items-center mb-1">
+                <div className="w-4 h-4 bg-red-500 mr-2"></div>
+                <span className="text-xs">End Node</span>
+              </div>
+              <div className="flex items-center mb-1">
+                <div className="w-4 h-4 bg-blue-300 mr-2"></div>
+                <span className="text-xs">Visited Node</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-yellow-500 mr-2"></div>
+                <span className="text-xs">Shortest Path</span>
+              </div>
+            </div>
+          );
+        };
+      
+        const renderNodeInfo = () => {
+          return (
+            <div className="absolute bottom-4 right-4 bg-white p-2 rounded-md shadow-md">
+              <div className="text-sm font-bold mb-1">Locations:</div>
+              {cityGraph.nodes.map(node => (
+                <div key={node.id} className="text-xs mb-1">
+                  <span className="font-bold">{node.id}:</span> {node.name}
+                </div>
+              ))}
+            </div>
+          );
+        };
+      
+        const renderStatus = () => {
+          let message = '';
+          if (!startNode) {
+            message = 'Select a starting point';
+          } else if (!endNode) {
+            message = 'Select a destination';
+          } else if (isRunning) {
+            message = 'Finding shortest path...';
+          } else if (isPathFound) {
+            if (shortestPath.length > 1) {
+              const distance = dijkstraSteps[dijkstraSteps.length - 1].distances[endNode];
+              message = `Shortest path found! Distance: ${distance}`;
+            } else {
+              message = 'No path exists between these points';
+            }
+          }
+      
+          return (
+            <div className="text-center my-2 font-bold">
+              {message}
+            </div>
+          );
+        };
+      
+        return (
+          <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg">
+            <h2 className="text-xl font-bold mb-4">City Path Finder</h2>
+            
+            {renderStatus()}
+            
+            <div className="relative border-2 border-gray-300 bg-white rounded-lg w-full h-96">
+              <svg width="100%" height="100%" viewBox="0 0 600 450">
+                {/* Background grid for visual reference */}
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="gray" strokeWidth="0.1" />
+                </pattern>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                
+                {/* Roads and buildings */}
+                {renderRoads()}
+                {renderBuildings()}
+              </svg>
+              
+              {renderLegend()}
+              {renderNodeInfo()}
+            </div>
+            
+            <div className="flex space-x-4 mt-4">
+              <button 
+                onClick={runAlgorithm}
+                disabled={!startNode || !endNode || isRunning}
+                className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
+              >
+                Find Shortest Path
+              </button>
+              <button 
+                onClick={resetSelection}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                Reset
+              </button>
+            </div>
+            
+            <div className="mt-4 text-sm">
+              <p><strong>Instructions:</strong> First click on a building to select the starting point, then click on another building to select the destination. Click "Find Shortest Path" to run Dijkstra's algorithm.</p>
+            </div>
+          </div>
+        );
+      }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<CityPathFinder />);
+  </script>
+</body>
+</html>
