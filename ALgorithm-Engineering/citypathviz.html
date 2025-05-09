@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>City Path Finder</title>
+  <title>Enhanced City Path Finder</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body>
+<body class="bg-gray-50">
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
+    
     function CityPathFinder() {
         // City graph data - represents intersections and roads with distances
         const cityGraph = {
@@ -47,11 +48,18 @@
         const [startNode, setStartNode] = useState(null);
         const [endNode, setEndNode] = useState(null);
         const [visitedNodes, setVisitedNodes] = useState([]);
+        const [currentNode, setCurrentNode] = useState(null);
         const [shortestPath, setShortestPath] = useState([]);
+        const [pathTracing, setPathTracing] = useState([]);
         const [algorithmStep, setAlgorithmStep] = useState(0);
         const [dijkstraSteps, setDijkstraSteps] = useState([]);
         const [isRunning, setIsRunning] = useState(false);
         const [isPathFound, setIsPathFound] = useState(false);
+        const [isTracingPath, setIsTracingPath] = useState(false);
+        const [animationSpeed, setAnimationSpeed] = useState(800);
+        const [currentDistances, setCurrentDistances] = useState({});
+        const [currentPrevious, setCurrentPrevious] = useState({});
+        const [selectedSpeed, setSelectedSpeed] = useState("normal");
       
         // Convert graph to adjacency list format
         const createAdjacencyList = () => {
@@ -105,7 +113,7 @@
             });
             
             // If we can't find a node or we've reached the end node
-            if (currentNode === null || currentNode === end) break;
+            if (currentNode === null || distances[currentNode] === Infinity) break;
             
             // Remove from unvisited set
             unvisited.delete(currentNode);
@@ -132,13 +140,16 @@
               unvisited: [...unvisited],
               previous: {...previous}
             });
+            
+            // Break if we've reached the end node
+            if (currentNode === end) break;
           }
           
           // Construct shortest path
           const path = [];
           let current = end;
           
-          while (current !== null) {
+          while (current !== null && distances[current] !== Infinity) {
             path.unshift(current);
             current = previous[current];
           }
@@ -146,9 +157,7 @@
           const finalStep = {
             currentNode: end,
             distances: {...distances},
-            visited: cityGraph.nodes
-              .filter(node => !unvisited.has(node.id))
-              .map(node => node.id),
+            visited: steps[steps.length - 1].visited,
             unvisited: [...unvisited],
             previous: {...previous},
             shortestPath: path.length > 1 && path[0] === start ? path : []
@@ -160,10 +169,14 @@
         };
       
         const handleNodeClick = (nodeId) => {
+          if (isRunning) return;
+          
           if (!startNode) {
             setStartNode(nodeId);
           } else if (!endNode) {
-            setEndNode(nodeId);
+            if (nodeId !== startNode) {
+              setEndNode(nodeId);
+            }
           }
         };
       
@@ -174,6 +187,13 @@
             setAlgorithmStep(0);
             setIsRunning(true);
             setIsPathFound(false);
+            setIsTracingPath(false);
+            setPathTracing([]);
+            setVisitedNodes([]);
+            setCurrentNode(null);
+            setShortestPath([]);
+            setCurrentDistances({});
+            setCurrentPrevious({});
           }
         };
       
@@ -181,11 +201,33 @@
           setStartNode(null);
           setEndNode(null);
           setVisitedNodes([]);
+          setCurrentNode(null);
           setShortestPath([]);
+          setPathTracing([]);
           setAlgorithmStep(0);
           setDijkstraSteps([]);
           setIsRunning(false);
           setIsPathFound(false);
+          setIsTracingPath(false);
+          setCurrentDistances({});
+          setCurrentPrevious({});
+        };
+        
+        const handleSpeedChange = (speed) => {
+          setSelectedSpeed(speed);
+          switch (speed) {
+            case "slow":
+              setAnimationSpeed(1200);
+              break;
+            case "normal":
+              setAnimationSpeed(800);
+              break;
+            case "fast":
+              setAnimationSpeed(400);
+              break;
+            default:
+              setAnimationSpeed(800);
+          }
         };
       
         // Step through the algorithm visualization
@@ -194,21 +236,49 @@
             if (algorithmStep < dijkstraSteps.length) {
               const currentStep = dijkstraSteps[algorithmStep];
               setVisitedNodes(currentStep.visited);
+              setCurrentNode(currentStep.currentNode);
+              setCurrentDistances(currentStep.distances);
+              setCurrentPrevious(currentStep.previous);
               
               if (algorithmStep === dijkstraSteps.length - 1) {
-                setShortestPath(currentStep.shortestPath);
-                setIsPathFound(true);
-                setIsRunning(false);
+                const path = currentStep.shortestPath;
+                if (path.length > 0) {
+                  setIsTracingPath(true);
+                  // We'll trace the path in the next effect
+                } else {
+                  setIsPathFound(true);
+                  setIsRunning(false);
+                }
+              } else {
+                const timer = setTimeout(() => {
+                  setAlgorithmStep(prev => prev + 1);
+                }, animationSpeed);
+                
+                return () => clearTimeout(timer);
               }
-      
-              const timer = setTimeout(() => {
-                setAlgorithmStep(prev => prev + 1);
-              }, 800);
-              
-              return () => clearTimeout(timer);
             }
           }
-        }, [algorithmStep, dijkstraSteps, isRunning]);
+        }, [algorithmStep, dijkstraSteps, isRunning, animationSpeed]);
+        
+        // Handle path tracing animation
+        useEffect(() => {
+          if (isTracingPath && dijkstraSteps.length > 0) {
+            const finalPath = dijkstraSteps[dijkstraSteps.length - 1].shortestPath;
+            
+            if (pathTracing.length < finalPath.length) {
+              const timer = setTimeout(() => {
+                setPathTracing(finalPath.slice(0, pathTracing.length + 1));
+              }, animationSpeed / 2);
+              
+              return () => clearTimeout(timer);
+            } else {
+              setShortestPath(finalPath);
+              setIsPathFound(true);
+              setIsRunning(false);
+              setIsTracingPath(false);
+            }
+          }
+        }, [isTracingPath, pathTracing, dijkstraSteps, animationSpeed]);
       
         // Find node by ID
         const getNodeById = (id) => {
@@ -225,51 +295,94 @@
       
         // Check if node is in path
         const isInPath = (nodeId) => {
-          return shortestPath.includes(nodeId);
+          return pathTracing.includes(nodeId);
         };
       
         // Check if edge is in path
         const isEdgeInPath = (source, target) => {
-          if (shortestPath.length < 2) return false;
+          if (pathTracing.length < 2) return false;
           
-          for (let i = 0; i < shortestPath.length - 1; i++) {
-            if ((shortestPath[i] === source && shortestPath[i+1] === target) ||
-                (shortestPath[i] === target && shortestPath[i+1] === source)) {
+          for (let i = 0; i < pathTracing.length - 1; i++) {
+            if ((pathTracing[i] === source && pathTracing[i+1] === target) ||
+                (pathTracing[i] === target && pathTracing[i+1] === source)) {
               return true;
             }
           }
           return false;
         };
+        
+        // Check if node is being explored (current node)
+        const isCurrentNode = (nodeId) => {
+          return nodeId === currentNode;
+        };
       
-        // Get node status
+        // Get node status with enhanced visual states
         const getNodeStatus = (nodeId) => {
           if (nodeId === startNode) return 'start';
           if (nodeId === endNode) return 'end';
+          if (isCurrentNode(nodeId)) return 'current';
           if (isInPath(nodeId)) return 'path';
           if (visitedNodes.includes(nodeId)) return 'visited';
           return 'unvisited';
+        };
+        
+        // Get the distance label for a node
+        const getDistanceLabel = (nodeId) => {
+          if (!currentDistances[nodeId] && currentDistances[nodeId] !== 0) return "∞";
+          return currentDistances[nodeId] === Infinity ? "∞" : currentDistances[nodeId];
         };
       
         // Create city buildings (visual representations)
         const renderBuildings = () => {
           return cityGraph.nodes.map(node => {
             const status = getNodeStatus(node.id);
-            let bgColor = 'bg-gray-300';
+            let bgColor = 'bg-gray-200';
+            let ringColor = '';
             
-            if (status === 'start') bgColor = 'bg-green-500';
-            else if (status === 'end') bgColor = 'bg-red-500';
-            else if (status === 'path') bgColor = 'bg-yellow-500';
-            else if (status === 'visited') bgColor = 'bg-blue-300';
+            if (status === 'start') {
+              bgColor = 'bg-green-500';
+              ringColor = 'ring-4 ring-green-200';
+            } else if (status === 'end') {
+              bgColor = 'bg-red-500';
+              ringColor = 'ring-4 ring-red-200';
+            } else if (status === 'current') {
+              bgColor = 'bg-purple-500';
+              ringColor = 'ring-4 ring-purple-200 animate-pulse';
+            } else if (status === 'path') {
+              bgColor = 'bg-yellow-500';
+              ringColor = 'ring-2 ring-yellow-300';
+            } else if (status === 'visited') {
+              bgColor = 'bg-blue-400';
+            }
+            
+            const distanceLabel = getDistanceLabel(node.id);
             
             return (
               <g key={node.id} onClick={() => handleNodeClick(node.id)}>
+                {/* Distance label above node */}
+                <text 
+                  x={node.x} 
+                  y={node.y - 28} 
+                  textAnchor="middle" 
+                  className={`text-xs font-bold ${distanceLabel === "∞" ? "text-gray-500" : "text-blue-800"}`}
+                >
+                  {isRunning || isPathFound ? distanceLabel : ""}
+                </text>
+                
+                {/* Node with pulse animation effect for current node */}
+                <circle 
+                  cx={node.x} 
+                  cy={node.y} 
+                  r="22"
+                  className={`${ringColor} ${status === 'current' ? 'opacity-50' : 'opacity-0'}`}
+                />
                 <rect 
                   x={node.x - 20} 
                   y={node.y - 20} 
                   width="40" 
                   height="40" 
                   rx="5"
-                  className={`${bgColor} hover:stroke-blue-600 hover:stroke-2 cursor-pointer`}
+                  className={`${bgColor} hover:stroke-blue-600 hover:stroke-2 cursor-pointer shadow-md ${status === 'current' ? 'stroke-purple-700 stroke-2' : ''}`}
                 />
                 <text 
                   x={node.x} 
@@ -284,7 +397,7 @@
           });
         };
       
-        // Create roads between buildings
+        // Create roads between buildings with enhanced visuals
         const renderRoads = () => {
           return cityGraph.edges.map((edge, index) => {
             const sourceNode = getNodeById(edge.source);
@@ -292,8 +405,23 @@
             const midX = (sourceNode.x + targetNode.x) / 2;
             const midY = (sourceNode.y + targetNode.y) / 2;
             
-            // Check if this edge is part of the shortest path
+            // Check if this edge is part of the traced path
             const isPathEdge = isEdgeInPath(edge.source, edge.target);
+            
+            // Determine if this edge connects to current node
+            const isActiveEdge = currentNode === edge.source || currentNode === edge.target;
+            
+            // Style based on status
+            let edgeStyle = 'stroke-gray-300';
+            let edgeWidth = 'stroke-2';
+            
+            if (isPathEdge) {
+              edgeStyle = 'stroke-yellow-500';
+              edgeWidth = 'stroke-4';
+            } else if (isActiveEdge && isRunning) {
+              edgeStyle = 'stroke-purple-300';
+              edgeWidth = 'stroke-3';
+            }
             
             return (
               <g key={`edge-${index}`}>
@@ -302,13 +430,13 @@
                   y1={sourceNode.y} 
                   x2={targetNode.x} 
                   y2={targetNode.y} 
-                  className={`stroke-2 ${isPathEdge ? 'stroke-yellow-500' : 'stroke-gray-400'}`}
+                  className={`${edgeWidth} ${edgeStyle} ${isPathEdge ? 'stroke-dasharray-none' : ''}`}
                 />
                 <circle 
                   cx={midX} 
                   cy={midY} 
                   r="10" 
-                  className="fill-white stroke-gray-400"
+                  className={`fill-white ${isPathEdge ? 'stroke-yellow-500' : 'stroke-gray-400'}`}
                 />
                 <text 
                   x={midX} 
@@ -325,22 +453,26 @@
       
         const renderLegend = () => {
           return (
-            <div className="absolute top-4 right-4 bg-white p-2 rounded-md shadow-md">
-              <div className="text-sm font-bold mb-1">Legend:</div>
+            <div className="absolute top-4 right-4 bg-white p-3 rounded-md shadow-lg border border-gray-200">
+              <div className="text-sm font-bold mb-2">Legend:</div>
               <div className="flex items-center mb-1">
-                <div className="w-4 h-4 bg-green-500 mr-2"></div>
+                <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
                 <span className="text-xs">Start Node</span>
               </div>
               <div className="flex items-center mb-1">
-                <div className="w-4 h-4 bg-red-500 mr-2"></div>
+                <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
                 <span className="text-xs">End Node</span>
               </div>
               <div className="flex items-center mb-1">
-                <div className="w-4 h-4 bg-blue-300 mr-2"></div>
+                <div className="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+                <span className="text-xs">Current Node</span>
+              </div>
+              <div className="flex items-center mb-1">
+                <div className="w-4 h-4 bg-blue-400 rounded mr-2"></div>
                 <span className="text-xs">Visited Node</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-yellow-500 mr-2"></div>
+                <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
                 <span className="text-xs">Shortest Path</span>
               </div>
             </div>
@@ -348,49 +480,100 @@
         };
       
         const renderNodeInfo = () => {
+          
+        };
+        
+        const renderAlgorithmState = () => {
+          // Don't show if not running and no path found
+          if (!isRunning && !isPathFound) return null;
+          
+          let currentNodeName = "";
+          if (currentNode) {
+            const node = getNodeById(currentNode);
+            currentNodeName = node ? node.name : "";
+          }
+          
           return (
-            <div className="absolute bottom-4 right-4 bg-white p-2 rounded-md shadow-md">
-              <div className="text-sm font-bold mb-1">Locations:</div>
-              {cityGraph.nodes.map(node => (
-                <div key={node.id} className="text-xs mb-1">
-                  <span className="font-bold">{node.id}:</span> {node.name}
+            <div className="absolute top-4 left-4 bg-white p-3 rounded-md shadow-lg border border-gray-200 max-w-xs">
+              <div className="text-sm font-bold mb-1">Algorithm Progress:</div>
+              
+              {isRunning && !isTracingPath && (
+                <>
+                  <div className="text-xs mb-1">
+                    <span className="font-bold">Status:</span> Exploring from {currentNode ? `${currentNode} (${currentNodeName})` : "starting point"}
+                  </div>
+                  <div className="text-xs mb-1">
+                    <span className="font-bold">Nodes visited:</span> {visitedNodes.length} of {cityGraph.nodes.length}
+                  </div>
+                </>
+              )}
+              
+              {isTracingPath && (
+                <div className="text-xs mb-1">
+                  <span className="font-bold">Status:</span> Tracing shortest path...
                 </div>
-              ))}
+              )}
+              
+              {isPathFound && shortestPath.length > 1 && (
+                <>
+                  <div className="text-xs mb-1">
+                    <span className="font-bold">Path:</span> {shortestPath.join(' → ')}
+                  </div>
+                  <div className="text-xs mb-1">
+                    <span className="font-bold">Total distance:</span> {currentDistances[endNode]}
+                  </div>
+                </>
+              )}
+              
+              {isPathFound && shortestPath.length <= 1 && (
+                <div className="text-xs text-red-500">
+                  No path exists between these locations
+                </div>
+              )}
             </div>
           );
         };
       
         const renderStatus = () => {
           let message = '';
+          let statusClass = 'text-gray-700';
+          
           if (!startNode) {
             message = 'Select a starting point';
           } else if (!endNode) {
             message = 'Select a destination';
-          } else if (isRunning) {
-            message = 'Finding shortest path...';
+          } else if (isRunning && !isTracingPath) {
+            message = `Finding shortest path... Exploring from ${currentNode || startNode}`;
+            statusClass = 'text-blue-600';
+          } else if (isTracingPath) {
+            message = 'Tracing shortest path...';
+            statusClass = 'text-yellow-600';
           } else if (isPathFound) {
             if (shortestPath.length > 1) {
               const distance = dijkstraSteps[dijkstraSteps.length - 1].distances[endNode];
               message = `Shortest path found! Distance: ${distance}`;
+              statusClass = 'text-green-600';
             } else {
               message = 'No path exists between these points';
+              statusClass = 'text-red-600';
             }
           }
       
           return (
-            <div className="text-center my-2 font-bold">
+            <div className={`text-center my-3 font-bold ${statusClass}`}>
               {message}
             </div>
           );
         };
       
         return (
-          <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg">
-            <h2 className="text-xl font-bold mb-4">City Path Finder</h2>
+          <div className="flex flex-col items-center p-6 max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold mb-2 text-indigo-800">Route Optimization System</h2>
+            <p className="text-sm text-gray-600 mb-4">Visualizing Dijkstra's Algorithm for finding the shortest path</p>
             
             {renderStatus()}
             
-            <div className="relative border-2 border-gray-300 bg-white rounded-lg w-full h-96">
+            <div className="relative border-2 border-gray-300 bg-white rounded-lg w-full h-96 shadow-lg">
               <svg width="100%" height="100%" viewBox="0 0 600 450">
                 {/* Background grid for visual reference */}
                 <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -405,26 +588,60 @@
               
               {renderLegend()}
               {renderNodeInfo()}
+              {renderAlgorithmState()}
             </div>
             
-            <div className="flex space-x-4 mt-4">
+            <div className="flex flex-wrap items-center gap-4 mt-4">
               <button 
                 onClick={runAlgorithm}
                 disabled={!startNode || !endNode || isRunning}
-                className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-md disabled:bg-gray-300 disabled:shadow-none transition-colors"
               >
                 Find Shortest Path
               </button>
               <button 
                 onClick={resetSelection}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
               >
                 Reset
               </button>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium">Speed:</span>
+                <div className="flex border border-gray-300 rounded-md overflow-hidden">
+                  <button 
+                    onClick={() => handleSpeedChange("slow")}
+                    className={`px-3 py-1 text-xs ${selectedSpeed === "slow" ? "bg-blue-100 text-blue-800" : "bg-white text-gray-700 hover:bg-gray-100"}`}
+                  >
+                    Slow
+                  </button>
+                  <button 
+                    onClick={() => handleSpeedChange("normal")}
+                    className={`px-3 py-1 text-xs ${selectedSpeed === "normal" ? "bg-blue-100 text-blue-800" : "bg-white text-gray-700 hover:bg-gray-100"}`}
+                  >
+                    Normal
+                  </button>
+                  <button 
+                    onClick={() => handleSpeedChange("fast")}
+                    className={`px-3 py-1 text-xs ${selectedSpeed === "fast" ? "bg-blue-100 text-blue-800" : "bg-white text-gray-700 hover:bg-gray-100"}`}
+                  >
+                    Fast
+                  </button>
+                </div>
+              </div>
             </div>
             
-            <div className="mt-4 text-sm">
-              <p><strong>Instructions:</strong> First click on a building to select the starting point, then click on another building to select the destination. Click "Find Shortest Path" to run Dijkstra's algorithm.</p>
+            <div className="mt-4 text-sm bg-indigo-50 p-3 rounded-md border border-indigo-100 shadow-sm w-full">
+              <p className="mb-2"><strong>Instructions:</strong></p>
+              <ol className="list-decimal pl-5 space-y-1">
+                <li>Click on a building to select the starting point (turns green)</li>
+                <li>Click on another building to select the destination (turns red)</li>
+                <li>Click "Find Shortest Path" to watch Dijkstra's algorithm in action</li>
+                <li>The purple building shows the current node being explored</li>
+                <li>Blue buildings show visited nodes</li>
+                <li>Numbers above buildings show the current shortest distance from start</li>
+                <li>The yellow path highlights the final shortest route</li>
+              </ol>
             </div>
           </div>
         );

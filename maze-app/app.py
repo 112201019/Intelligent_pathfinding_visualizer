@@ -49,17 +49,17 @@ def solve():
             x, y = map(int, cell_str.split(','))
             maze[(x, y)] = [tuple(map(int, n.split(','))) for n in neighbors_str]
         if algorithm=="BFS":
-            visited, path, maxspace, visitedlength, lenpath = bfs(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath, lenexplore = bfs(maze, start, end)
         elif algorithm=="DFS":    
-            visited, path, maxspace, visitedlength, lenpath= dfs(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath, lenexplore  = dfs(maze, start, end)
         elif algorithm=="A*_Manhattan":
-            visited, path, maxspace, visitedlength, lenpath= a_starM(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath, lenexplore = a_starM(maze, start, end)
         elif algorithm=="A*_Euclidean":
-            visited, path, maxspace, visitedlength, lenpath= a_starE(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath, lenexplore = a_starE(maze, start, end)
         elif algorithm=="A*_chebyshev":
-            visited, path, maxspace, visitedlength, lenpath= a_starC(maze, start, end)
+            visited, path, maxspace, visitedlength, lenpath, lenexplore = a_starC(maze, start, end)
         elif algorithm=="A*_ManhattanWallHeuristic":
-            visited, path, maxspace, visitedlength, lenpath= a_star_enhanced(maze, start, end, 1)
+            visited, path, maxspace, visitedlength, lenpath, lenexplore = a_star_enhanced(maze, start, end, 1)
             
         
         return jsonify({
@@ -67,7 +67,8 @@ def solve():
             'path': [f"{x},{y}" for x, y in path],
             'maxspace': maxspace,
             'visitedlength':visitedlength,
-            'lenpath': lenpath
+            'lenpath': lenpath,
+            'lenexplore': lenexplore
         })
         
     except KeyError as e:

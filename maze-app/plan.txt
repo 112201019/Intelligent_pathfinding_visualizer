@@ -1,0 +1,8 @@
+1. first we added A* manhattan and euclidean in the old interface (explain manhattan euclidean) --
+2. upgraded to web app through flask --
+3. added chebyshev (explain cheby) --
+4. added wall heuristic (speed, optimality tradeoff) -- 
+4. info/stats panel 
+5. pause/play--
+6. speed control--
+7. resizing the maze(10x10 - 250x250)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maze Algorithm Visualizer</title>
+    <title>INTELLIGENT PATHFINDING VISUALIZER</title>
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,15 +38,17 @@
         --shadow-dark: rgba(50, 50, 93, 0.25);
         --border-radius: 8px;
         --font-family: 'Poppins', sans-serif;
-
+        --light-bg-gradient-start: #a8c0ff;  /* Soft Periwinkle Blue */
+        --light-bg-gradient-mid:   #dbe7ff;  /* Very Pale Sky Blue / Lavender Tint */
+        --light-bg-gradient-end:   #f0f4ff;  /* Almost White with a hint of Blue/Lilac */
         /* Maze Colors */
         --color-wall: #3a3a3a;
         --color-empty: #ffffff;
-        --color-start:rgb(184, 0, 205); /* Emerald Green */
-        --color-end:rgb(231, 150, 0);   /* Alizarin Red */
+        --color-start:rgb(26, 158, 0); /* Emerald Green */
+        --color-end:rgb(223, 58, 58);   /* Alizarin Red */
         --color-visited: #aed6f1; /* Lighter Blue */
-        --color-visiting: #5dade2; /* Slightly Darker Blue */
-        --color-path:rgb(56, 0, 129);   /* Sunflower Yellow */
+        --color-visiting: #8ad2e4; /* Slightly Darker Blue */
+        --color-path:rgb(20, 44, 182);   /* Sunflower Yellow */
         --color-path-trace:rgb(56, 0, 129); /* Orange for path drawing */
       }
 
@@ -63,7 +65,7 @@
 
       body {
         font-family: var(--font-family);
-        background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+        background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end));
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -79,7 +81,7 @@
         margin-bottom: 30px;
         text-align: center;
         font-weight: 600;
-        color: var(--primary-text);
+        color: black;
         text-shadow: 2px 2px 8px var(--shadow-dark);
       }
 
@@ -167,7 +169,8 @@
 
       /* ---=== Canvas Styling ===--- */
       #mazeCanvas {
-        border: none; /* Remove default border, use shadow */
+
+        border: black; /* Remove default border, use shadow */
         background: var(--card-bg-opaque);
         box-shadow: 0 10px 30px var(--shadow-medium);
         margin-top: 20px;
@@ -363,11 +366,12 @@
       }
 
        #status-message {
+        font-size: larger;
         margin-top: 15px;
         text-align: center;
         font-weight: 500;
         min-height: 24px; /* Prevent layout shift */
-        color: var(--accent-color);
+        color: rgb(65, 65, 65);
         text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
        }
 
@@ -456,7 +460,7 @@
     </style>
 </head>
 <body>
-    <h1>Algorithm Visualizer on Mazes</h1>
+    <h1>Intelligent Pathfinding Visualizer</h1>
 
           
           
@@ -481,10 +485,10 @@
              <select id="algorithmSelect" title="Select Pathfinding Algorithm">
                 <option value="DFS">Depth-First Search</option>
                 <option value="BFS">Breadth-First Search</option>
-                <option value="A*_Manhattan">A* (Manhattan)</option>
-                <option value="A*_Euclidean">A* (Euclidean)</option>
-                <option value="A*_chebyshev">A* (Chebyshev)</option>
-                <option value="A*_ManhattanWallHeuristic">A* (Wall Heusristic)</option>
+                <option value="A*_Manhattan">A* - Manhattan</option>
+                <option value="A*_Euclidean">A* - Euclidean</option>
+                <option value="A*_chebyshev">A* - Chebyshev</option>
+                <option value="A*_ManhattanWallHeuristic">A* - Wall Heusristic</option>
             </select>
         </div>
 
@@ -567,7 +571,7 @@
                     <li><strong>Manhattan:</strong> Estimates cost as `dx + dy`. Good for grids where only horizontal/vertical movement is allowed.</li>
                     <li><strong>Euclidean:</strong> Straight-line distance `sqrt(dx² + dy²)`. More accurate distance but computationally slightly heavier.</li>
                     <li><strong>Chebyshev:</strong> Estimates cost as `max(dx, dy)`. Useful when diagonal movement has the same cost as straight.</li>
-                    <li><strong>ManWallHeu:</strong> A custom heuristic (Manhattan + Wall Penalty) that might perform differently depending on maze structure (implementation details vary).</li>
+                    <li><strong>Wall heuristic:</strong>  an A* search algorithm using an "enhanced" heuristic that combines Manhattan distance with a penalty for walls (missing connections) encountered along direct horizontal/vertical paths, aiming to find a more efficient route in a maze.</li>
                 </ul>
             </div>
 
@@ -970,7 +974,7 @@
 
                 // updateAlgorithmStats(algorithm, result.maxspace, result.visitedlength, result.lenpath); // Record stats - Use correct keys
                 console.log(result.lenpath);
-                updateAlgorithmStats(algorithm ,result.maxspace ,result.visitedlength ,result.lenpath);
+                updateAlgorithmStats(algorithm ,result.maxspace ,result.visitedlength ,result.lenpath, result.lenexplore);
 
 
                 // Prepare animation queue
@@ -1273,7 +1277,7 @@
      * Uses the keys EXACTLY as received from the Flask backend ('maxspace', 'visitedlength', 'lenpath').
      * Parses values to ensure they are numbers or stores a placeholder ('N/A' or 0).
      */
-    function updateAlgorithmStats(algorithm, maxspace, visitedlength, lenpath) {
+    function updateAlgorithmStats(algorithm, maxspace, visitedlength, lenpath, lenexplore) {
          // Helper to ensure stats are numbers or a known placeholder
          const parseStat = (val) => (typeof val === 'number' ? val : 'N/A');
 
@@ -1282,6 +1286,7 @@
             maxspace: parseStat(maxspace),
             visitedlength: parseStat(visitedlength),
             // Store path length: 0 means no path found, >0 is the length
+            lenexplore: parseStat(lenexplore),
             lenpath: typeof lenpath === 'number' ? lenpath : 0
         };
          // Enable the compare button once the first set of stats is available
@@ -1312,8 +1317,9 @@
             <thead>
                 <tr>
                 <th>Algorithm</th>
-                <th>Max Structure Size</th>
+                <th>Space complexity</th>
                 <th>Cells Visited</th>
+                <th>Cells Explored </th>
                 <th>Path Length</th>
                 </tr>
             </thead>
@@ -1355,6 +1361,7 @@
                 <td>${algo.replace(/_/g, ' ')}</td> <!-- Display name nicely -->
                 <td>${stats.maxspace === 'N/A' ? '-' : stats.maxspace}</td> <!-- Handle N/A -->
                 <td>${stats.visitedlength === 'N/A' ? '-' : stats.visitedlength}</td> <!-- Handle N/A -->
+                <td>${stats.lenexplore === 'N/A' ? '-' : stats.lenexplore}</td> <!-- Handle N/A -->
                 <td>${noPathFound ? 'No Path' : pathLen}</td> <!-- Display 'No Path' or length -->
             </tr>
             `;

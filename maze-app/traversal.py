@@ -34,18 +34,18 @@ def dfs(maze, start, end):
         node = path[node]
     final_path.reverse()
     # print(len(visited), len(final_path), maxsize)
-    return visited_order, final_path, maxsize, len(visited), len(final_path)
+    return visited_order, final_path, maxsize, len(visited), len(final_path), len(visited)+len(stack)
 
 def bfs(maze, start, end):
     visited_order = []
-    stack = [start]
+    queue = [start]
     visited = set()
     path = {}
     maxsize=0
 
-    while stack:
-        maxsize=max(maxsize, len(stack))
-        current = stack.pop(0)
+    while queue:
+        maxsize=max(maxsize, len(queue))
+        current = queue.pop(0)
         if current in visited:
             continue
         visited.add(current)
@@ -56,7 +56,7 @@ def bfs(maze, start, end):
             
         for neighbor in maze[current]:
             if neighbor not in visited:
-                stack.append(neighbor)
+                queue.append(neighbor)
                 path[neighbor] = current
 
     # Reconstruct path
@@ -66,9 +66,8 @@ def bfs(maze, start, end):
         final_path.append(node)
         node = path[node]
     final_path.reverse()
-    # print(len(visited), len(final_path))
     
-    return visited_order, final_path, maxsize, len(visited), len(final_path)
+    return visited_order, final_path, maxsize, len(visited), len(final_path), len(visited) + len(queue)
 
 def manhattan_distance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -110,7 +109,7 @@ def a_starM(maze, start, end):
         node = path[node]
     final_path.reverse()
     
-    return visited_order, final_path, maxsize, len(visited), len(final_path)
+    return visited_order, final_path, maxsize, len(visited), len(final_path), len(visited)+len(priority_queue)
 
 def EuclideanDistance(a, b):
     return ((a[0] - b[0])**2 + (a[1] - b[1])**2) **0.5
@@ -152,7 +151,7 @@ def a_starE(maze, start, end):
         node = path[node]
     final_path.reverse()
     
-    return visited_order, final_path, maxsize, len(visited), len(final_path)
+    return visited_order, final_path, maxsize, len(visited), len(final_path), len(visited)+len(priority_queue)
 
 def chebyshev_distance(a, b):
     return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
@@ -194,7 +193,7 @@ def a_starC(maze, start, end):
         node = path[node]
     final_path.reverse()
     
-    return visited_order, final_path, maxsize, len(visited), len(final_path)
+    return visited_order, final_path, maxsize, len(visited), len(final_path), len(visited)+len(priority_queue)
 
 import heapq
 import random
@@ -326,6 +325,6 @@ def a_star_enhanced(maze, start, end, wall_weight=1):
         node = came_from[node]
     final_path.reverse()
     
-    return visited_order, final_path, maxsize, len(visited), len(final_path)
+    return visited_order, final_path, maxsize, len(visited), len(final_path), len(visited)+len(priority_queue)
 
 
