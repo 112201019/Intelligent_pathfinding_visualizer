@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from traversal import *
 from maze import *
+import os
 app = Flask(__name__)
 
 # Flask routes
