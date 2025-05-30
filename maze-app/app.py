@@ -76,5 +76,8 @@ def solve():
     except ValueError as e:
         return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
 
-#if __name__ == '__main__':
- #   app.run(debug=True)
+if __name__ == '__main__':
+    # Get port from environment variable (Render provides this)
+    port = int(os.environ.get('PORT', 5000))
+    # Run on all interfaces (0.0.0.0) so Render can access it
+    app.run(host='0.0.0.0', port=port, debug=False)
